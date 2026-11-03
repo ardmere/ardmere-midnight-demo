@@ -1,0 +1,104 @@
+// Copyright 2026 Ardmere
+// SPDX-License-Identifier: Apache-2.0
+//
+// Ardmere × Midnight Wave 3 — signed-root PoR snapshot membership demo.
+// Off-chain Compact-hash Merkle tree (depth 4, 8 leaves). On-chain: ONLY
+// signed public fields. No ledger MerkleTree ADT, no insert, no checkRoot.
+
+pragma language_version 0.23;
+
+import CompactStandardLibrary;
+import "./schnorr" prefix Schnorr_;
+
+/**
+ * Public ledger (whitepaper §5). merkleRoot is Compact MerkleTreeDigest
+ * (Field wrapper) — the native type returned by merkleTreePathRoot — not a
+ * separate Bytes<32> encoding of an exchange root.
+ */
+export ledger publisherPk: JubjubPoint;
+export ledger snapshotId: Bytes<32>;
+export ledger reportRef: Bytes<32>;
+export ledger merkleRoot: MerkleTreeDigest;
+export ledger published: Boolean;
+
+/**
+ * Caller secret for leaf binding (security-guide / derivePublicKey pattern).
+ * NOT ownPublicKey().
+ */
+witness callerSecretKey(): Bytes<32>;
+
+constructor(pk: JubjubPoint) {
+  publisherPk = disclose(pk);
+  published = false;
+}
+
+/**
+ * Leaf = domain-separated persistentHash of the caller's secret key.
+ * Same function used off-chain when building the 8-leaf demo tree.
+ */
+export pure circuit derivePublicKey(sk: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([
+    pad(32, "ardmere:por:pk:v1"),
+    sk
+  ]);
+}
+
+/**
+ * Signature message encoding: Vector<3, Field> over
+ * (snapshotId, reportRef, merkleRoot). First encode test pins this.
+ */
+export pure circuit encodeSnapshotMessage(
+  sid: Bytes<32>,
+  rref: Bytes<32>,
+  root: MerkleTreeDigest
+): Vector<3, Field> {
+  return [
+    degradeToTransient(sid),
+    degradeToTransient(rref),
+    transientHash<MerkleTreeDigest>(root)
+  ];
+}
+
+export pure circuit schnorrChallenge(
+  ann_x: Field,
+  ann_y: Field,
+  pk_x: Field,
+  pk_y: Field,
+  msg: Vector<3, Field>
+): Field {
+  return Schnorr_schnorrChallenge(ann_x, ann_y, pk_x, pk_y, msg);
+}
+
+/**
+ * publishSnapshot: verify Jubjub Schnorr over (snapshotId, reportRef, merkleRoot),
+ * write public fields, set published. Leaves are never written.
+ */
+export circuit publishSnapshot(
+  sid: Bytes<32>,
+  rref: Bytes<32>,
+  root: MerkleTreeDigest,
+  signature: Schnorr_SchnorrSignature
+): [] {
+  assert(!published, "already published");
+  const msg = encodeSnapshotMessage(sid, rref, root);
+  Schnorr_schnorrVerify<3>(msg, signature, publisherPk);
+  snapshotId = disclose(sid);
+  reportRef = disclose(rref);
+  merkleRoot = disclose(root);
+  published = true;
+}
+
+/**
+ * attestInclusion: require published; bind path.leaf to derivePublicKey(sk);
+ * recompute root from private path with the same hash as off-chain tree build
+ * (merkleTreePathRoot); assert equals published merkleRoot.
+ * Does not disclose leaf or path — only the recomputed digest enters the
+ * public comparison via disclose on the digest equality operand.
+ */
+export circuit attestInclusion(path: MerkleTreePath<4, Bytes<32>>): [] {
+  assert(published, "not published");
+  const leaf = derivePublicKey(callerSecretKey());
+  assert(path.leaf == leaf, "wrong leaf");
+  const root = merkleTreePathRoot<4, Bytes<32>>(path);
+  assert(disclose(root) == merkleRoot, "bad root");
+}

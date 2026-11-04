@@ -3,8 +3,8 @@
 /**
  * Read public ledger fields via ledger() / indexer (no proof, no DUST).
  *
- * Until Preprod deploy exists, prints fixture public fields and notes that
- * on-chain read is blocked.
+ * Until CONTRACT_ADDRESS + BLOCKFROST_PROJECT_ID exist, prints fixtures and
+ * lists the exact env needed for live Preprod reads.
  *
  * CLI: npm run read
  */
@@ -12,11 +12,18 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadPreprodConfig, missingForPublish } from "./config.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.resolve(here, "../fixtures");
 
 function main(): void {
+  const cfg = loadPreprodConfig();
+  const missing = missingForPublish(cfg).filter(
+    (m) =>
+      m.name === "BLOCKFROST_PROJECT_ID" || m.name === "CONTRACT_ADDRESS",
+  );
+
   const vectors = JSON.parse(
     fs.readFileSync(path.join(fixturesDir, "vectors.json"), "utf8"),
   );
@@ -30,19 +37,28 @@ function main(): void {
   console.log(
     JSON.stringify(
       {
-        source: "fixtures (contract not deployed on Preprod yet)",
+        source:
+          missing.length === 0
+            ? "preprod-ready (indexer call not yet wired in this CLI revision)"
+            : "fixtures (live indexer read blocked)",
         snapshotId: vectors.snapshotIdHex,
         reportRef: report.reportRefHex,
         reportUrl: report.url,
         merkleRootField: tree.merkleRootFieldHex,
         published: false,
-        note: "After deploy + publishSnapshot, this command will call ledger()/indexer with no proof and no DUST.",
-        preprodAddress: null,
+        proofServer: {
+          url: cfg.proofServer,
+          source: cfg.proofServerSource,
+          note: "read does not use the proof server (no proof / no DUST).",
+        },
+        preprodAddress: cfg.contractAddress,
+        missingSecrets: missing,
       },
       null,
       2,
     ),
   );
+  if (missing.length > 0) process.exitCode = 2;
 }
 
 main();

@@ -39,7 +39,8 @@ Demo failures (no successful txs): **outsider**, **wrong-leaf**.
 
 ## Pinned toolchain (Preprod / ledger-v8)
 
-Pinned on first successful compile in this repo (2026-11-03):
+Pinned on first successful compile in this repo (2026-11-03); hosted proof
+probe 2026-11-04:
 
 | Component | Version |
 | --- | --- |
@@ -50,7 +51,8 @@ Pinned on first successful compile in this repo (2026-11-03):
 | `@midnight-ntwrk/midnight-js-*` | **4.1.1** |
 | `@midnight-ntwrk/ledger-v8` | **8.1.0** |
 | `@midnight-ntwrk/wallet-sdk` | **1.2.0** |
-| Proof server (local Docker) | **8.1.3** (`midnightntwrk/proof-server:8.1.3`) |
+| Proof server (hosted Preprod default) | **`https://proof-server.preprod.midnight.network`** (reports `/version` **8.1.0**, proof **V2**) |
+| Proof server (optional local Docker) | **8.1.3** (`midnightntwrk/proof-server:8.1.3`) |
 | Node.js | **22** or **24** |
 
 Do not use Compact 0.34+ / runtime 0.19–0.20 on Preprod (ledger-9; incompatible).
@@ -65,21 +67,48 @@ whitepaper’s verify-then-write intent.
 (`{ field: Field }`), which is what `merkleTreePathRoot` returns. The ledger
 stores that type (not a separate exchange `Bytes<32>` root).
 
+## Proof server (hosted, no local Docker)
+
+Default `MIDNIGHT_PROOF_SERVER_URL` is Midnight’s hosted Preprod endpoint:
+
+```text
+https://proof-server.preprod.midnight.network
+```
+
+Wire-up: `httpClientProofProvider(url, NodeZkConfigProvider(zkConfigPath))` in
+`src/providers.ts`. Health check: `npm run proof:health`.
+
+### Privacy caveat
+
+The proof server sees **witness / private proving inputs in the clear** (no
+TLS client auth; request bodies include circuit private data). Midnight’s own
+docs recommend a **local** proof server for that reason. This demo defaults to
+the **hosted** Preprod server so Wave 3 work can proceed **without Docker**.
+That is a deliberate hackathon/demo tradeoff — **do not** treat hosted proving
+as a privacy-preserving production setup. Override to local anytime:
+
+```bash
+export MIDNIGHT_PROOF_SERVER_URL=http://127.0.0.1:6300
+docker run -p 127.0.0.1:6300:6300 midnightntwrk/proof-server:8.1.3
+```
+
 ## Layout
 
 ```
 LICENSE
 README.md
+.env.example
 contract/
   por_snapshot.compact      # ledger + publishSnapshot + attestInclusion
   schnorr.compact           # Preprod Schnorr polyfill
   managed/                  # compact compile output (keys + JS)
 src/
-  keys.ts  tree.ts  sign.ts  publish.ts  attest.ts  read.ts
+  config.ts providers.ts proofHealth.ts
+  keys.ts tree.ts sign.ts publish.ts attest.ts read.ts
 fixtures/
-  tree.json  report-ref.json  vectors.json
+  tree.json report-ref.json vectors.json
 test/
-  encode.test.ts  inclusion.test.ts
+  encode.test.ts inclusion.test.ts proof-config.test.ts
 ```
 
 ## Install & compile
@@ -95,30 +124,37 @@ npm install
 npm run compile
 npm run generate:fixtures   # writes fixtures/ + secrets/demo-keys.json (gitignored)
 npm test
+npm run proof:health        # probes hosted proof-server (no Docker)
 ```
 
-## Demo commands (intended)
+## Demo commands
 
 | Command | Expectation |
 | --- | --- |
-| `npm run read` | Print public fields (no proof / no DUST). Until deploy: prints fixtures. |
-| `npm run attest -- member` | Success path (local sim today; Preprod tx after deploy). |
-| `npm run attest -- outsider` | Assert fails; no successful tx. |
-| `npm run attest -- wrong-leaf` | Assert fails; no successful tx. |
-| `npm run publish` | Prep step only; blocked until Preprod deploy. |
+| `npm run proof:health` | Hosted proof-server `/health` ok + version |
+| `npm run read` | Public fields (no proof / no DUST). Fixtures until deploy. |
+| `npm run attest -- member` | Local circuit success; Preprod tx when secrets exist |
+| `npm run attest -- outsider` | Assert fails; no successful tx |
+| `npm run attest -- wrong-leaf` | Assert fails; no successful tx |
+| `npm run publish` | Prep; lists missing secrets if any; does not invent keys |
 
-## Preprod status
+## Secrets required for Preprod deploy (operator-supplied)
 
-**Not deployed yet.** This environment has no Docker (cannot run proof-server
-8.1.3), and faucet / DUST / Blockfrost wiring is not configured.
+Copy `.env.example` → `.env`. Scripts **do not invent** wallet keys.
 
-Faucet (document for operators): `https://faucet.preprod.midnight.network/`  
-Proof server (when Docker is available):
+| Env | Purpose |
+| --- | --- |
+| `BLOCKFROST_PROJECT_ID` | Preprod indexer + node RPC (Blockfrost). Retired Midnight-hosted RPC/indexer. |
+| `MIDNIGHT_WALLET_SEED` **or** `MIDNIGHT_WALLET_MNEMONIC` | Exactly one. Fund via faucet; wait for DUST. |
+| `PRIVATE_STATE_PASSWORD` | ≥16 chars for midnight-js private-state store |
+| `CONTRACT_ADDRESS` | After deploy, for publish/attest/read |
+| `MIDNIGHT_PROOF_SERVER_URL` | Optional; default hosted Preprod URL above |
 
-```bash
-docker run -p 6300:6300 -e MIDNIGHT_PROOF_SERVER_VERBOSE=true \
-  midnightntwrk/proof-server:8.1.3
-```
+Faucet: `https://midnight-tmnight-preprod.nethermind.dev/`
+
+**Preprod status:** contract **not deployed** in this environment. Hosted
+proof-server is reachable; Blockfrost token + wallet seed/mnemonic + DUST are
+still required from the operator before a real publish tx.
 
 ## reportRef
 

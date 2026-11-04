@@ -3,9 +3,9 @@
 /**
  * Demo attest commands (member / outsider / wrong-leaf).
  *
- * On Preprod these submit attestInclusion txs (or fail before a successful tx).
- * Without deploy + proof-server, this CLI runs the local circuit simulation
- * against fixtures so negative cases still demonstrate assert failure.
+ * Without Preprod secrets: runs local circuit simulation (no proof server).
+ * With secrets + CONTRACT_ADDRESS: intended to submit via hosted proof-server
+ * (wallet path); until that wallet wiring lands, still reports readiness.
  *
  * Usage:
  *   npm run attest -- member
@@ -20,6 +20,11 @@ import { randomBytes } from "node:crypto";
 import { fromHex, hexToBigint } from "./constants.js";
 import type { MerklePath, SchnorrSignature } from "./contract.js";
 import { simulateAttest, simulatePublish } from "./localSim.js";
+import {
+  loadPreprodConfig,
+  missingForPublish,
+} from "./config.js";
+import { checkProofServer } from "./proofHealth.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.resolve(here, "../fixtures");
@@ -64,8 +69,11 @@ function signatureFromJson(s: any): SchnorrSignature {
   };
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const mode = process.argv[2] ?? "member";
+  const cfg = loadPreprodConfig();
+  const missing = missingForPublish(cfg);
+  const proof = await checkProofServer(cfg.proofServer);
   const { vectors, tree, report, secrets } = loadFixtures();
 
   const publisherPk = {
@@ -77,7 +85,6 @@ function main(): void {
   const merkleRoot = { field: hexToBigint(tree.merkleRootFieldHex) };
   const signature = signatureFromJson(vectors.validSignature);
 
-  // Local sim of a successful publish so attest can run against published state.
   const published = simulatePublish({
     publisherPk,
     snapshotId,
@@ -90,6 +97,20 @@ function main(): void {
   const memberPath = pathFromJson(tree.paths[0]);
   const memberSk = fromHex(secrets.memberSecretKeysHex[0]);
 
+  const preprod = {
+    proofServer: {
+      url: cfg.proofServer,
+      source: cfg.proofServerSource,
+      ok: proof.ok,
+      version: proof.version,
+    },
+    missingSecrets: missing,
+    note:
+      missing.length > 0
+        ? "Local circuit sim only. Hosted proof-server reachable check above; Preprod tx blocked on missing secrets."
+        : "Secrets present — Preprod wallet call path not yet submitting in this CLI revision; local sim still run for demo fidelity.",
+  };
+
   if (mode === "member") {
     simulateAttest({
       publishedContext: published.context,
@@ -97,11 +118,7 @@ function main(): void {
       path: memberPath,
     });
     console.log(
-      JSON.stringify({
-        mode: "member",
-        result: "ok",
-        note: "Local circuit simulation succeeded. Preprod tx not submitted (undeployed).",
-      }),
+      JSON.stringify({ mode: "member", result: "ok", preprod }, null, 2),
     );
     return;
   }
@@ -114,17 +131,26 @@ function main(): void {
         path: memberPath,
       });
       console.log(
-        JSON.stringify({ mode: "outsider", result: "unexpected-success" }),
+        JSON.stringify({
+          mode: "outsider",
+          result: "unexpected-success",
+          preprod,
+        }),
       );
       process.exitCode = 1;
     } catch (e: any) {
       console.log(
-        JSON.stringify({
-          mode: "outsider",
-          result: "assert-failed",
-          message: String(e?.message ?? e).slice(0, 200),
-          note: "No successful tx (local sim).",
-        }),
+        JSON.stringify(
+          {
+            mode: "outsider",
+            result: "assert-failed",
+            message: String(e?.message ?? e).slice(0, 200),
+            note: "No successful tx (local sim).",
+            preprod,
+          },
+          null,
+          2,
+        ),
       );
     }
     return;
@@ -132,24 +158,32 @@ function main(): void {
 
   if (mode === "wrong-leaf") {
     try {
-      // Member key 1 with path for leaf 0 → leaf binding fails.
       simulateAttest({
         publishedContext: published.context,
         callerSk: fromHex(secrets.memberSecretKeysHex[1]),
         path: memberPath,
       });
       console.log(
-        JSON.stringify({ mode: "wrong-leaf", result: "unexpected-success" }),
+        JSON.stringify({
+          mode: "wrong-leaf",
+          result: "unexpected-success",
+          preprod,
+        }),
       );
       process.exitCode = 1;
     } catch (e: any) {
       console.log(
-        JSON.stringify({
-          mode: "wrong-leaf",
-          result: "assert-failed",
-          message: String(e?.message ?? e).slice(0, 200),
-          note: "No successful tx (local sim).",
-        }),
+        JSON.stringify(
+          {
+            mode: "wrong-leaf",
+            result: "assert-failed",
+            message: String(e?.message ?? e).slice(0, 200),
+            note: "No successful tx (local sim).",
+            preprod,
+          },
+          null,
+          2,
+        ),
       );
     }
     return;
@@ -159,4 +193,7 @@ function main(): void {
   process.exitCode = 2;
 }
 
-main();
+main().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});

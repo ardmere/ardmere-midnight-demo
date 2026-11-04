@@ -8,6 +8,8 @@ dist/
 secrets/
 .env
 .env.*
+!.env.example
+.midnight-wallet-state/
 
 # Optional local proof-server state
 proof-server-data/

@@ -19,7 +19,8 @@
     "sign": "tsx src/sign.ts",
     "publish": "tsx src/publish.ts",
     "attest": "tsx src/attest.ts",
-    "read": "tsx src/read.ts"
+    "read": "tsx src/read.ts",
+    "proof:health": "tsx src/proofHealth.ts"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-js": "2.5.1",

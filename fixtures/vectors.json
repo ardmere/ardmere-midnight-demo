@@ -1,0 +1,32 @@
+{
+  "snapshotIdHex": "6172646d6572652d6d69646e696768742d77617665332d64656d6f2d76310000",
+  "snapshotIdUtf8": "ardmere-midnight-wave3-demo-v1",
+  "messageFieldCount": 3,
+  "messageFieldsHex": [
+    "31762d6f6d65642d33657661772d746867696e64696d2d6572656d647261",
+    "1a626ab8dda3beffc01d80a5054b4db89b734c304b5cc167ba4c19ed0e76ef",
+    "57f6b9a290d5778e640769759e760cbdf02d592ae033da48b822367ef162f721"
+  ],
+  "publisherPk": {
+    "x": "1315a00d7e7e08058adb4665be35fcd1bd3f4c6e70c5a9d9af56c8b09c03c619",
+    "y": "5c5288f13df61999cd06ba32744cf8534eaf5f5d3cfcb50d643c0583de07cc0e"
+  },
+  "validSignature": {
+    "announcement": {
+      "x": "790aa0af9f96b73ab62173d6b3ef48f5a8469909359c9aea4846f8bfb2355ca",
+      "y": "47204df5b47ac4b0c9d9be7549186d92c3c4e590d01f2ee2e64ef5ec01e5b146"
+    },
+    "response": "2ebe34bc12d849fa94765443b06a71fc9e9e153f35c14b19623755621c88d91"
+  },
+  "mutatedSnapshotIdHex": "6272646d6572652d6d69646e696768742d77617665332d64656d6f2d76310000",
+  "mutatedMessageFieldsHex": [
+    "31762d6f6d65642d33657661772d746867696e64696d2d6572656d647262",
+    "1a626ab8dda3beffc01d80a5054b4db89b734c304b5cc167ba4c19ed0e76ef",
+    "57f6b9a290d5778e640769759e760cbdf02d592ae033da48b822367ef162f721"
+  ],
+  "checks": {
+    "validSignatureAcceptedByLocalSim": true,
+    "mutatedFieldSignatureRejectedByLocalSim": true
+  },
+  "encoding": "Vector<3, Field> = [degradeToTransient(snapshotId), degradeToTransient(reportRef), transientHash(merkleRoot)]"
+}

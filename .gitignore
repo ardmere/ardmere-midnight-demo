@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.midnight-state.json
+*.log
+.DS_Store
+
+# Local secrets / operator keys (fixtures keep public material only)
+secrets/
+.env
+.env.*
+!.env.example
+.midnight-wallet-state/
+
+# Optional local proof-server state
+proof-server-data/

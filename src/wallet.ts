@@ -25,6 +25,7 @@ import {
 } from "@midnight-ntwrk/midnight-js-network-id";
 import { loadPreprodConfig } from "./config.js";
 import { toHex } from "./constants.js";
+import { ENV_FILE, preprodEnv, upsertEnvVar } from "./env.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const seedFile = path.resolve(here, "../secrets/wallet-seed.txt");
@@ -91,11 +92,19 @@ export function resolveSeed(
 }
 
 async function main(): Promise<void> {
-  const { seedHex, source } = resolveSeed(process.env, {
+  const writeEnv = !process.argv.includes("--no-save");
+  const { seedHex, source } = resolveSeed(preprodEnv(), {
     generate: process.argv.includes("--generate-seed"),
   });
   const derived = deriveUnshieldedAddress(seedHex);
   const relSeed = path.relative(process.cwd(), seedFile);
+
+  const saved = writeEnv
+    ? {
+        seed: upsertEnvVar("MIDNIGHT_WALLET_SEED", seedHex),
+        address: upsertEnvVar("MIDNIGHT_WALLET_ADDRESS", derived.address),
+      }
+    : null;
 
   console.log(
     JSON.stringify(
@@ -104,12 +113,21 @@ async function main(): Promise<void> {
         networkId: derived.networkId,
         seedSource: source,
         seedStorage: source === "env" ? "MIDNIGHT_WALLET_SEED" : relSeed,
+        envFile: writeEnv
+          ? {
+              path: path.relative(process.cwd(), ENV_FILE),
+              gitignored: true,
+              seed: saved?.seed,
+              address: saved?.address,
+            }
+          : "not written (--no-save)",
         nextSteps: [
           "Paste the address into the Preprod faucet (Cloudflare Turnstile is required, so this step cannot be automated).",
           "Register the received tNIGHT for tDUST generation so fees can be paid.",
           "BLOCKFROST_PROJECT_ID is still required for Preprod indexer and node RPC.",
         ],
-        warning: "Never commit the seed; secrets/ is gitignored.",
+        warning:
+          "The seed is written to .env (gitignored, mode 0600). Never commit it.",
       },
       null,
       2,

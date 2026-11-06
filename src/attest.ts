@@ -26,6 +26,7 @@ import {
   missingForPublish,
 } from "./config.js";
 import { checkProofServer } from "./proofHealth.js";
+import { preprodEnv } from "./env.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.resolve(here, "../fixtures");
@@ -73,7 +74,7 @@ function signatureFromJson(s: any): SchnorrSignature {
 
 async function main(): Promise<void> {
   const mode = process.argv[2] ?? "member";
-  const cfg = loadPreprodConfig();
+  const cfg = loadPreprodConfig(preprodEnv());
   const missing = missingForPublish(cfg);
   const proof = await checkProofServer(cfg.proofServer);
   const { vectors, tree, report, secrets } = loadFixtures();

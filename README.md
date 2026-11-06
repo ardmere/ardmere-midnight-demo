@@ -104,11 +104,11 @@ contract/
   managed/                  # compact compile output (keys + JS)
 src/
   config.ts providers.ts proofHealth.ts
-  keys.ts tree.ts sign.ts publish.ts attest.ts read.ts wallet.ts demoKeys.ts
+  keys.ts tree.ts sign.ts publish.ts attest.ts read.ts wallet.ts demoKeys.ts env.ts
 fixtures/
   tree.json report-ref.json vectors.json
 test/
-  encode.test.ts inclusion.test.ts proof-config.test.ts wallet.test.ts
+  encode.test.ts inclusion.test.ts proof-config.test.ts wallet.test.ts env.test.ts
 ```
 
 ## Install & compile
@@ -149,10 +149,16 @@ Verified locally on Node 22.23.4 against Compact 0.31.1:
 
 Copy `.env.example` → `.env`. Scripts **do not invent** wallet keys.
 
+`.env` is gitignored (`.gitignore` line `.env`) and every CLI entry point loads
+it automatically, so values there behave like exported variables. A variable
+already set in the shell wins over the file, which keeps CI overrides and
+one-off runs predictable.
+
 | Env | Purpose |
 | --- | --- |
 | `BLOCKFROST_PROJECT_ID` | Preprod indexer + node RPC (Blockfrost). Retired Midnight-hosted RPC/indexer. |
 | `MIDNIGHT_WALLET_SEED` **or** `MIDNIGHT_WALLET_MNEMONIC` | Exactly one. Fund via faucet; wait for DUST. |
+| `MIDNIGHT_WALLET_ADDRESS` | Derived `mn_addr_preprod1…` address for the faucet. Public; written by `wallet:address`. |
 | `PRIVATE_STATE_PASSWORD` | ≥16 chars for midnight-js private-state store |
 | `CONTRACT_ADDRESS` | After deploy, for publish/attest/read |
 | `MIDNIGHT_PROOF_SERVER_URL` | Optional; default hosted Preprod URL above |
@@ -170,9 +176,10 @@ Findings from the 2026-11-06 local run:
   without a solved challenge it answers `403 Captcha verification failed`.
   The claim therefore **cannot be automated unattended** — a human must solve
   the challenge in a browser.
-- Get the address to paste with `npm run wallet:address --silent` (add
-  `-- --generate-seed` once to create a seed under `secrets/`). This is
-  offline and spends nothing.
+- Get the address to paste with `npm run wallet:address`. It derives the
+  address offline, writes `MIDNIGHT_WALLET_SEED` and `MIDNIGHT_WALLET_ADDRESS`
+  into the gitignored `.env` (mode `0600`), and spends nothing. Add
+  `-- --generate-seed` once to create a seed; pass `-- --no-save` to print only.
 - Holding tNIGHT generates no DUST on its own: the tNIGHT must be
   **registered** for tDUST generation, and DUST accrues over time (roughly a
   week to refill a full cap). A wallet right after the faucet drip has no DUST

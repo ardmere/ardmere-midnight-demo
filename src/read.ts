@@ -13,12 +13,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadPreprodConfig, missingForPublish } from "./config.js";
+import { preprodEnv } from "./env.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.resolve(here, "../fixtures");
 
 function main(): void {
-  const cfg = loadPreprodConfig();
+  const cfg = loadPreprodConfig(preprodEnv());
   const missing = missingForPublish(cfg).filter(
     (m) =>
       m.name === "BLOCKFROST_PROJECT_ID" || m.name === "CONTRACT_ADDRESS",

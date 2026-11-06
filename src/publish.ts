@@ -19,12 +19,13 @@ import {
 } from "./config.js";
 import { checkProofServer } from "./proofHealth.js";
 import { createProofStack } from "./providers.js";
+import { preprodEnv } from "./env.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.resolve(here, "../fixtures");
 
 async function main(): Promise<void> {
-  const cfg = loadPreprodConfig();
+  const cfg = loadPreprodConfig(preprodEnv());
   const missing = missingForPublish(cfg);
   const proof = await checkProofServer(cfg.proofServer);
 

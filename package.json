@@ -20,6 +20,7 @@
     "publish": "tsx src/publish.ts",
     "attest": "tsx src/attest.ts",
     "read": "tsx src/read.ts",
+    "wallet:address": "tsx src/wallet.ts",
     "proof:health": "tsx src/proofHealth.ts"
   },
   "dependencies": {

@@ -104,11 +104,11 @@ contract/
   managed/                  # compact compile output (keys + JS)
 src/
   config.ts providers.ts proofHealth.ts
-  keys.ts tree.ts sign.ts publish.ts attest.ts read.ts
+  keys.ts tree.ts sign.ts publish.ts attest.ts read.ts wallet.ts demoKeys.ts
 fixtures/
   tree.json report-ref.json vectors.json
 test/
-  encode.test.ts inclusion.test.ts proof-config.test.ts
+  encode.test.ts inclusion.test.ts proof-config.test.ts wallet.test.ts
 ```
 
 ## Install & compile
@@ -122,21 +122,28 @@ compact update 0.31.1
 
 npm install
 npm run compile
-npm run generate:fixtures   # writes fixtures/ + secrets/demo-keys.json (gitignored)
+npm run generate:fixtures   # deterministic; also writes secrets/demo-keys.json
 npm test
 npm run proof:health        # probes hosted proof-server (no Docker)
 ```
 
+`generate:fixtures` is deterministic: demo keys are derived from a fixed
+label, so fixtures never churn and a fresh clone can run `npm test` and the
+`attest` demo without any gitignored secrets file.
+
 ## Demo commands
+
+Verified locally on Node 22.23.4 against Compact 0.31.1:
 
 | Command | Expectation |
 | --- | --- |
-| `npm run proof:health` | Hosted proof-server `/health` ok + version |
+| `npm run proof:health` | Hosted proof-server `/health` ok, version `8.1.0`, proof `V2` |
 | `npm run read` | Public fields (no proof / no DUST). Fixtures until deploy. |
 | `npm run attest -- member` | Local circuit success; Preprod tx when secrets exist |
 | `npm run attest -- outsider` | Assert fails; no successful tx |
 | `npm run attest -- wrong-leaf` | Assert fails; no successful tx |
 | `npm run publish` | Prep; lists missing secrets if any; does not invent keys |
+| `npm run wallet:address -- --generate-seed` | Offline Preprod `mn_addr_preprod1…` address for the faucet |
 
 ## Secrets required for Preprod deploy (operator-supplied)
 
@@ -150,11 +157,38 @@ Copy `.env.example` → `.env`. Scripts **do not invent** wallet keys.
 | `CONTRACT_ADDRESS` | After deploy, for publish/attest/read |
 | `MIDNIGHT_PROOF_SERVER_URL` | Optional; default hosted Preprod URL above |
 
-Faucet: `https://midnight-tmnight-preprod.nethermind.dev/`
+Faucet: `https://midnight-tmnight-preprod.nethermind.dev/` (also reachable at
+`https://faucet.preprod.midnight.network/`)
+
+### Faucet and DUST checklist
+
+Findings from the 2026-11-06 local run:
+
+- The faucet accepts **only** an unshielded `mn_addr_preprod1…` address, and
+  each request sends 5,000 tNIGHT. Shielded and DUST addresses are rejected.
+- `POST /api/drips` enforces **Cloudflare Turnstile** (`X-Captcha-Token`):
+  without a solved challenge it answers `403 Captcha verification failed`.
+  The claim therefore **cannot be automated unattended** — a human must solve
+  the challenge in a browser.
+- Get the address to paste with `npm run wallet:address --silent` (add
+  `-- --generate-seed` once to create a seed under `secrets/`). This is
+  offline and spends nothing.
+- Holding tNIGHT generates no DUST on its own: the tNIGHT must be
+  **registered** for tDUST generation, and DUST accrues over time (roughly a
+  week to refill a full cap). A wallet right after the faucet drip has no DUST
+  yet and cannot pay fees.
+- Blockfrost is still mandatory: the Midnight-hosted Preprod indexer/RPC were
+  retired on 2026-10-09 and now answer `410 ENDPOINT_DECOMMISSIONED`.
 
 **Preprod status:** contract **not deployed** in this environment. Hosted
 proof-server is reachable; Blockfrost token + wallet seed/mnemonic + DUST are
 still required from the operator before a real publish tx.
+
+Known gap: this tree has **no deploy or wallet-sync implementation** yet.
+`src/publish.ts` builds the payload and provider stack but never submits, and
+`createProofStack` returns `publicDataProvider: null` without Blockfrost. A
+real Preprod run needs a `deployContract`/`callTx` path plus a synced wallet
+before the on-chain demo can be claimed.
 
 ## reportRef
 

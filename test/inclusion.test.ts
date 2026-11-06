@@ -9,12 +9,22 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { fromHex, hexToBigint } from "../src/constants.js";
 import type { MerklePath, SchnorrSignature } from "../src/contract.js";
+import { demoKeys } from "../src/demoKeys.js";
 import { recomputeRootFromPath } from "../src/tree.js";
 import { simulateAttest, simulatePublish } from "../src/localSim.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.resolve(here, "../fixtures");
-const secretsPath = path.resolve(here, "../secrets/demo-keys.json");
+
+/** Committed fixtures are generated from the same deterministic demo keys. */
+function memberSecretKeys(): Uint8Array[] {
+  const fromFile = path.resolve(here, "../secrets/demo-keys.json");
+  if (fs.existsSync(fromFile)) {
+    const json = JSON.parse(fs.readFileSync(fromFile, "utf8"));
+    return json.memberSecretKeysHex.map(fromHex);
+  }
+  return demoKeys().memberSecretKeys;
+}
 
 function pathFromJson(p: any): MerklePath {
   return {
@@ -50,7 +60,6 @@ describe("off-chain inclusion vs circuit path root", () => {
   });
 
   it("valid signature publishes; member attest succeeds; outsider and wrong-leaf fail", () => {
-    assert.ok(fs.existsSync(secretsPath), "run npm run generate:fixtures first");
     const vectors = JSON.parse(
       fs.readFileSync(path.join(fixturesDir, "vectors.json"), "utf8"),
     );
@@ -60,7 +69,7 @@ describe("off-chain inclusion vs circuit path root", () => {
     const report = JSON.parse(
       fs.readFileSync(path.join(fixturesDir, "report-ref.json"), "utf8"),
     );
-    const secrets = JSON.parse(fs.readFileSync(secretsPath, "utf8"));
+    const memberKs = memberSecretKeys();
 
     const publisherPk = {
       x: hexToBigint(vectors.publisherPk.x),
@@ -72,14 +81,14 @@ describe("off-chain inclusion vs circuit path root", () => {
       reportRef: fromHex(report.reportRefHex),
       merkleRoot: { field: hexToBigint(tree.merkleRootFieldHex) },
       signature: signatureFromJson(vectors.validSignature),
-      callerSk: fromHex(secrets.memberSecretKeysHex[0]),
+      callerSk: memberKs[0],
     });
     assert.equal(published.published, true);
 
     const memberPath = pathFromJson(tree.paths[0]);
     simulateAttest({
       publishedContext: published.context,
-      callerSk: fromHex(secrets.memberSecretKeysHex[0]),
+      callerSk: memberKs[0],
       path: memberPath,
     });
 
@@ -94,14 +103,13 @@ describe("off-chain inclusion vs circuit path root", () => {
     assert.throws(() =>
       simulateAttest({
         publishedContext: published.context,
-        callerSk: fromHex(secrets.memberSecretKeysHex[1]),
+        callerSk: memberKs[1],
         path: memberPath,
       }),
     );
   });
 
   it("rejects signature when a signed field is mutated", () => {
-    assert.ok(fs.existsSync(secretsPath), "run npm run generate:fixtures first");
     const vectors = JSON.parse(
       fs.readFileSync(path.join(fixturesDir, "vectors.json"), "utf8"),
     );
@@ -111,7 +119,7 @@ describe("off-chain inclusion vs circuit path root", () => {
     const report = JSON.parse(
       fs.readFileSync(path.join(fixturesDir, "report-ref.json"), "utf8"),
     );
-    const secrets = JSON.parse(fs.readFileSync(secretsPath, "utf8"));
+    const memberKs = memberSecretKeys();
     const publisherPk = {
       x: hexToBigint(vectors.publisherPk.x),
       y: hexToBigint(vectors.publisherPk.y),
@@ -124,7 +132,7 @@ describe("off-chain inclusion vs circuit path root", () => {
         reportRef: fromHex(report.reportRefHex),
         merkleRoot: { field: hexToBigint(tree.merkleRootFieldHex) },
         signature: signatureFromJson(vectors.validSignature),
-        callerSk: fromHex(secrets.memberSecretKeysHex[0]),
+        callerSk: memberKs[0],
       }),
     );
   });

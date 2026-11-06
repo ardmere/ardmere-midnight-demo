@@ -15,7 +15,8 @@ import {
   toHex,
   bigintToHex,
 } from "../src/constants.js";
-import { generatePublisherKeypair, pointToJson } from "../src/keys.js";
+import { derivePublisherPk, pointToJson } from "../src/keys.js";
+import { demoKeys } from "../src/demoKeys.js";
 import { buildDemoTree, assertPathsMatchRoot } from "../src/tree.js";
 import {
   encodeSnapshotMessage,
@@ -34,8 +35,12 @@ function main(): void {
   fs.mkdirSync(fixturesDir, { recursive: true });
   fs.mkdirSync(secretsDir, { recursive: true });
 
-  const kp = generatePublisherKeypair();
-  const tree = buildDemoTree();
+  const demo = demoKeys();
+  const kp = {
+    sk: demo.publisherSk,
+    pk: derivePublisherPk(demo.publisherSk),
+  };
+  const tree = buildDemoTree(demo.memberSecretKeys);
   assertPathsMatchRoot(tree);
 
   const snapshotId = pad32(SNAPSHOT_ID_UTF8);
@@ -47,6 +52,7 @@ function main(): void {
     snapshotId,
     reportRef,
     merkleRoot: tree.root,
+    nonce: demo.signatureNonce,
   });
 
   // Valid signature accepted by local circuit sim.

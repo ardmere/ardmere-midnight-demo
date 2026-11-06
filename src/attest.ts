@@ -17,14 +17,16 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomBytes } from "node:crypto";
-import { fromHex, hexToBigint } from "./constants.js";
+import { fromHex, hexToBigint, toHex } from "./constants.js";
 import type { MerklePath, SchnorrSignature } from "./contract.js";
 import { simulateAttest, simulatePublish } from "./localSim.js";
+import { demoKeys } from "./demoKeys.js";
 import {
   loadPreprodConfig,
   missingForPublish,
 } from "./config.js";
 import { checkProofServer } from "./proofHealth.js";
+import { preprodEnv } from "./env.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.resolve(here, "../fixtures");
@@ -40,12 +42,13 @@ function loadFixtures() {
     fs.readFileSync(path.join(fixturesDir, "report-ref.json"), "utf8"),
   );
   const secretsPath = path.resolve(here, "../secrets/demo-keys.json");
-  if (!fs.existsSync(secretsPath)) {
-    throw new Error(
-      "Missing secrets/demo-keys.json — run: npm run generate:fixtures",
-    );
-  }
-  const secrets = JSON.parse(fs.readFileSync(secretsPath, "utf8"));
+  // The committed fixtures come from deterministic demo keys, so a fresh
+  // clone needs no gitignored secrets file to run the demo.
+  const secrets = fs.existsSync(secretsPath)
+    ? JSON.parse(fs.readFileSync(secretsPath, "utf8"))
+    : {
+        memberSecretKeysHex: demoKeys().memberSecretKeys.map(toHex),
+      };
   return { vectors, tree, report, secrets };
 }
 
@@ -71,7 +74,7 @@ function signatureFromJson(s: any): SchnorrSignature {
 
 async function main(): Promise<void> {
   const mode = process.argv[2] ?? "member";
-  const cfg = loadPreprodConfig();
+  const cfg = loadPreprodConfig(preprodEnv());
   const missing = missingForPublish(cfg);
   const proof = await checkProofServer(cfg.proofServer);
   const { vectors, tree, report, secrets } = loadFixtures();

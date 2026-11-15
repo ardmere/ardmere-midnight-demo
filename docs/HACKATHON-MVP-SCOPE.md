@@ -12,8 +12,9 @@
 > Merkle Sum + on-chain snapshot + user inclusion self-check)
 > **Design input**: `midnight-standardized-por-assessment-and-mvp.md`
 > (standardized ZK-PoR assessment and MVP architecture, team document)
-> **Archived baseline**: branch `cursor/archive-wave3-signed-root-demo-0c01`
-> (Wave 3 "signed root + membership" demo, **not** this submission target)
+> **Archived baseline**: the in-tree Wave 3 "signed root + membership" code
+> (`contract/por_snapshot.compact`, `contract/schnorr.compact`; see `ARCHIVE.md`),
+> **not** this submission target
 
 ---
 
@@ -81,7 +82,7 @@ main deliverable; P1–P2 are stretch.
 
 ## 4. Reuse and replacement vs. the archived branch
 
-### Reused (from `cursor/archive-wave3-signed-root-demo-0c01`)
+### Reused from the archived Wave 3 demo
 
 - `package.json` dependency matrix, `src/config.ts`, `src/env.ts`,
   `src/providers.ts`, `src/proofHealth.ts`, `src/wallet.ts`

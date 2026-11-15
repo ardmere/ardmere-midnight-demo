@@ -1,222 +1,234 @@
-# Standardized Midnight PoR (Hackathon MVP)
+# Standardized Midnight PoR
 
-> **Submission target**: branch `cursor/standardized-por-mvp-0c01` · scope in [docs/HACKATHON-MVP-SCOPE.md](./docs/HACKATHON-MVP-SCOPE.md)  
-> **Archived**: the Wave 3 demo lives on `cursor/archive-wave3-signed-root-demo-0c01` · [docs/ARCHIVE.md](./docs/ARCHIVE.md)  
-> Quick start: [README-HACKATHON.md](./README-HACKATHON.md)
+Privacy-preserving proof-of-reserves MVP on **Midnight**: a fixed batch of 64
+users is committed as a **three-asset Merkle Sum Tree** (BTC / ETH / USDT), and
+a **Compact** circuit proves that every user has a positive net asset value at
+public prices, that the recomputed MST root matches the published snapshot, and
+that each asset's net exposure stays within the operator's declared reserves.
 
-Apache-2.0. The **Legacy** section below still documents the old `por_snapshot` tree and is kept as a reference when cherry-picking the toolchain from the archive; the new contract and MST follow the scope document.
+Built for the **Midnight Buildathon (Wave 3)** on AKINDO. Licensed under
+**Apache-2.0**.
 
----
+## Why this exists
 
-## Legacy (archived branch — not the hackathon target)
+A reserve report is only useful if users can check two things without exposing
+their balances:
 
-### Ardmere × Midnight Wave 3 demo
+1. their liability is included in the published commitment;
+2. the published commitment is consistent with a solvency statement.
 
-Apache-2.0 Compact contract and TypeScript scripts for the archived Wave 3
-signed-root membership demo.
+This MVP does both with zero-knowledge proofs: individual balances and
+`userIdHash` values stay private; the chain stores only the root, aggregate
+sums, prices and declared reserves.
 
-Design authority: Project docs `ardmere-midnight-whitepaper.md` and
-`ardmere-midnight-wave3-plan.md` (not this README).
+## Architecture
 
-## What this proves (and does not)
+```mermaid
+flowchart LR
+  A[Private batch<br/>64 leaves] --> B[Canonical signed balances<br/>pos / neg per asset]
+  B --> C[Three-asset MST<br/>depth 6, 6 sums per node]
+  C --> D[submitSnapshot witness<br/>6 vectors]
+  P[Public inputs<br/>prices, reserves, root] --> E[Compact circuit]
+  D --> E
+  E --> F[Public ledger<br/>root, prices, reserves, gross sums]
+  F --> G[Off-chain inclusion verifier]
+```
 
-After `publishSnapshot` succeeds on Preprod, the public ledger holds
-`snapshotId`, `reportRef`, `merkleRoot`, and `published = true`, and the
-circuit has checked a Jubjub Schnorr signature from the deploy-time
-`publisherPk` over those three commitment fields.
+- **Off-chain** (`src/mst/`): builds the tree, computes the root and gross/net
+  sums, emits inclusion paths and verifies them.
+- **On-chain** (`contract/standard_por.compact`): reads the private batch from
+  witnesses, recomputes the root, checks per-user NAV and per-asset exposure,
+  and publishes the snapshot.
+- **Midnight integration**: Compact contract, local/hosted proof server, ledger
+  state, testkit wallet, and an **undeployed** local chain for the end-to-end
+  demo.
 
-After `attestInclusion` succeeds, the caller has proven knowledge of a private
-Merkle path whose leaf equals `derivePublicKey(callerSecretKey)` and whose
-recomputed root equals the published `merkleRoot`, using the same Compact
-Merkle hash as the off-chain tree. Leaf and path are not disclosed.
+## Assets and units
 
-This does **not** prove exchange solvency, reserve ≥ liability, OKX Plonky2
-verification on Midnight, that the Compact root equals any exchange Merkle
-root, TEE attestation, or that the signer is honest (oracle trust).
+| Asset | Smallest unit | Decimals | Demo price (micro-USDT / unit) |
+| --- | --- | --- | --- |
+| BTC | satoshi | 8 | 600 (= 60,000 USDT / BTC) |
+| ETH | 1e-8 ETH | 8 | 30 (= 3,000 USDT / ETH) |
+| USDT | 1e-6 USDT | 6 | 1 |
 
-`reportRef` is only a SHA-256 digest of a public Ardmere report URL (context
-pointer).
+A user's per-asset balance may be negative. Each signed balance `x` is encoded
+canonically as `(pos, neg)` with `x = pos - neg` and `pos == 0 || neg == 0`.
+MST nodes keep `Uint<128>` gross long/short sums, so 64 `Uint<64>` leaves cannot
+overflow.
 
-## Model
+Prices are **public circuit inputs** (micro-USDT per smallest unit), bounded to
+`0 < price <= 1e12`, and written to the ledger with the snapshot.
 
-| Layer | Behavior |
+## Circuit and contract
+
+`submitSnapshot(seq, ts, priceBtc, priceEth, priceUsdt, reservesBtc, reservesEth, reservesUsdt, rootHash)`
+enforces:
+
+1. the caller is the deploy-time authority — `ownPublicKey().bytes == authorityPk`;
+2. signed balances are canonical for every leaf;
+3. every active leaf has `NAV = Σ(pos_i * price_i) - Σ(neg_i * price_i) > 0`
+   (all-zero padding leaves are exempt);
+4. the MST root recomputed from the private batch equals the published root;
+5. per asset, `posSum <= negSum + declaredReserves` (net exposure ≤ reserves);
+6. the snapshot is published only once.
+
+The public ledger contains `authorityPk`, `snapshotSeq`, `timestamp`, `mstRoot`,
+the three prices, the three declared reserves, six gross sums, and `published`.
+No individual balance or `userIdHash` is disclosed.
+
+See [docs/MST-ENCODING.md](docs/MST-ENCODING.md) for the exact encoding and
+[docs/TRUST-BOUNDARY.md](docs/TRUST-BOUNDARY.md) for what is not proved.
+
+## Quick start
+
+### Prerequisites
+
+- Node.js `>=22 <23` or `>=24` (tested with Node 26.13.1)
+- npm
+- Compact toolchain **0.31.1** (for compiling circuits and proving keys)
+- Docker Desktop with **16 GB memory** for the full `undeployed` demo
+  (the k=20 prover OOMs under 8 GB)
+
+### Install and test
+
+```bash
+npm install
+npm run generate:mst-fixtures   # deterministic demo batch + vectors
+npm run build-mst               # print root, net liabilities, gross sums
+npm test                        # 37 tests
+```
+
+### Local demo (no Docker, no DUST)
+
+```bash
+npm run submit-snapshot         # circuit sim + proof-server health
+npm run verify-inclusion        # verify the sample inclusion JSON
+npm run read:por                # print simulated public ledger fields
+```
+
+### Compile the contract
+
+```bash
+compact update 0.31.1
+npm run compile:standard-por
+```
+
+This generates the ZKIR, verifier and a ~291 MB `submitSnapshot.prover` under
+`contract/managed/standard_por/` (the prover is gitignored because GitHub rejects
+files over 100 MB).
+
+### Deploy to a local Midnight chain
+
+```bash
+PROOF_SERVER_VERSION=8.1.3 \
+INDEXER_VERSION=4.0.1 \
+MIDNIGHT_NODE_VERSION=0.22.5 \
+npm run undeployed:deploy-submit
+```
+
+The testkit stack (see [compose.yml](compose.yml)) starts node, indexer and proof
+server, deploys `standard_por`, and submits one snapshot. Results are written to
+`fixtures/undeployed-last-run.json` (gitignored) and printed as JSON.
+
+## Reference run (undeployed)
+
+Verified on the testkit local chain. The chain is ephemeral and is shut down
+after the script, so these values are the recorded run output rather than a
+permanent explorer link.
+
+| Field | Value |
 | --- | --- |
-| Off-chain | Depth-4 Compact-hash Merkle tree, **8 leaves**. Leaves derived via `derivePublicKey` (security-guide pattern — **not** `ownPublicKey`). |
-| On-chain ledger | **Only** `publisherPk`, `snapshotId`, `reportRef`, `merkleRoot`, `published`. |
-| Forbidden | Ledger `MerkleTree` ADT, `insert`, `checkRoot`. |
-| `publishSnapshot` | Schnorr verify over `(snapshotId, reportRef, merkleRoot)`, write fields, set published. |
-| `attestInclusion` | Require published; bind `path.leaf`; `merkleTreePathRoot`; assert equals published root. |
+| Contract | `301f868d9e836d46e81f6024c82136ace360b504976522eb0b945550b877d117` |
+| `submitSnapshot` tx | `5a5b879b942fdcdf08730a135d3793380188c180e2279bb4f42ff43c7e430344` |
+| Block height | 32 |
+| Authority `authorityPk` | `5aee546a493df3ac6ee85ef3ae8d647c9b9f3a640c114883113527d67ca2ec69` |
+| Prices (micro-USDT) | BTC 600 / ETH 30 / USDT 1 |
+| Declared reserves | BTC 137,000,000 / ETH 547,500,000 / USDT 268,000,000,000 |
+| Net liabilities | BTC 117,000,000 / ETH 497,500,000 / USDT 248,000,000,000 |
+| Gross sums | BTC +148,000,000 / −31,000,000; ETH +505,000,000 / −7,500,000; USDT +251,000,000,000 / −3,000,000,000 |
+| MST root | `115b66282ea7e65b206336935bdfbc1ad5f72de1a186a126897defffdabd34a2` |
 
-Demo failures (no successful txs): **outsider**, **wrong-leaf**.
+Circuit size: **k=20, 886,226 rows**; proving took about 2 minutes with a local
+proof server.
 
-## Pinned toolchain (Preprod / ledger-v8)
+## CLI reference
 
-Pinned on first successful compile in this repo (2026-11-03); hosted proof
-probe 2026-11-04:
-
-| Component | Version |
+| Command | Description |
 | --- | --- |
-| Compact toolchain (`compact compile`) | **0.31.1** |
-| Compact language | **0.23** |
-| `@midnight-ntwrk/compact-runtime` | **0.16.0** |
-| `@midnight-ntwrk/compact-js` | **2.5.1** |
-| `@midnight-ntwrk/midnight-js-*` | **4.1.1** |
-| `@midnight-ntwrk/ledger-v8` | **8.1.0** |
-| `@midnight-ntwrk/wallet-sdk` | **1.2.0** |
-| Proof server (hosted Preprod default) | **`https://proof-server.preprod.midnight.network`** (reports `/version` **8.1.0**, proof **V2**) |
-| Proof server (optional local Docker) | **8.1.3** (`midnightntwrk/proof-server:8.1.3`) |
-| Node.js | **22** or **24** |
+| `npm test` | MST, `standard_por` sim, inclusion, archived Wave 3 regression (37 tests) |
+| `npm run compile:mst` | Compile the MST pure circuits |
+| `npm run compile:standard-por` | Compile `submitSnapshot` and generate keys |
+| `npm run generate:mst-fixtures` | Regenerate `fixtures/mst-batch.json` and `fixtures/snapshot-vectors.json` |
+| `npm run build-mst` | Print root, net liabilities and gross sums |
+| `npm run submit-snapshot` | Local circuit simulation + proof-server health |
+| `npm run verify-inclusion` | Verify an inclusion JSON against the published root |
+| `npm run read:por` | Read simulated public ledger fields |
+| `npm run undeployed:deploy-submit` | Deploy + submit on the local testkit chain |
+| `npm run proof:health` | Probe the configured proof server |
 
-Do not use Compact 0.34+ / runtime 0.19–0.20 on Preprod (ledger-9; incompatible).
-
-**Schnorr note:** Compact 0.31.1 stdlib does not export `jubjubSchnorrVerify` /
-`JubjubSchnorrSignature` (those land on ledger-9 toolchains). This repo ships
-`contract/schnorr.compact` — the same Fiat–Shamir Jubjub polyfill pattern used
-by official zk-loan examples — so Preprod stays compatible while matching the
-whitepaper’s verify-then-write intent.
-
-**`merkleRoot` type:** Compact’s native Merkle digest is `MerkleTreeDigest`
-(`{ field: Field }`), which is what `merkleTreePathRoot` returns. The ledger
-stores that type (not a separate exchange `Bytes<32>` root).
-
-## Proof server (hosted, no local Docker)
-
-Default `MIDNIGHT_PROOF_SERVER_URL` is Midnight’s hosted Preprod endpoint:
+## Repository layout
 
 ```text
-https://proof-server.preprod.midnight.network
-```
-
-Wire-up: `httpClientProofProvider(url, NodeZkConfigProvider(zkConfigPath))` in
-`src/providers.ts`. Health check: `npm run proof:health`.
-
-### Privacy caveat
-
-The proof server sees **witness / private proving inputs in the clear** (no
-TLS client auth; request bodies include circuit private data). Midnight’s own
-docs recommend a **local** proof server for that reason. This demo defaults to
-the **hosted** Preprod server so Wave 3 work can proceed **without Docker**.
-That is a deliberate hackathon/demo tradeoff — **do not** treat hosted proving
-as a privacy-preserving production setup. Override to local anytime:
-
-```bash
-export MIDNIGHT_PROOF_SERVER_URL=http://127.0.0.1:6300
-docker run -p 127.0.0.1:6300:6300 midnightntwrk/proof-server:8.1.3
-```
-
-## Layout
-
-```
-LICENSE
-README.md
-.env.example
 contract/
-  por_snapshot.compact      # ledger + publishSnapshot + attestInclusion
-  schnorr.compact           # Preprod Schnorr polyfill
-  managed/                  # compact compile output (keys + JS)
+  standard_por.compact        # deployed contract
+  mst_hash.compact            # leaf/parent hashing + NAV check
+  mst_root_unrolled.compact   # generated 63-combine root + 256 checks
+  mst_bundle.compact          # pure-circuit bundle
+  managed/                    # compiled JS / ZKIR / verifier (prover ignored)
 src/
-  config.ts providers.ts proofHealth.ts
-  keys.ts tree.ts sign.ts publish.ts attest.ts read.ts wallet.ts demoKeys.ts env.ts
+  mst/                        # build, path, verify, constants
+  standardPor*.ts             # contract wrapper, sim, witnesses, compiled contract
+  submitSnapshot.ts           # dry-run CLI
+  verifyInclusion.ts          # user verification CLI
+  readPor.ts                  # public-field CLI
+  undeployedDeploySubmit.ts   # local chain deploy + submit
+scripts/
+  generate-mst-fixtures.ts
+  generate-mst-unrolled.compact.ts
+  build-mst.ts
 fixtures/
-  tree.json report-ref.json vectors.json
+  mst-batch.json
+  snapshot-vectors.json
 test/
-  encode.test.ts inclusion.test.ts proof-config.test.ts wallet.test.ts env.test.ts
+docs/
+  HACKATHON-MVP-SCOPE.md
+  MST-ENCODING.md
+  TRUST-BOUNDARY.md
+  UNDEPLOYED.md
+  ARCHIVE.md
 ```
 
-## Install & compile
+## Trust boundary
 
-```bash
-# Compact toolchain (once)
-curl --proto '=https' --tlsv1.2 -LsSf \
-  https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
-export PATH="$HOME/.local/bin:$PATH"
-compact update 0.31.1
+**Proved**: MST root consistency, canonical signed balances, per-user NAV > 0 at
+the submitted prices, per-asset net exposure ≤ reserves, and authority-gated
+publication.
 
-npm install
-npm run compile
-npm run generate:fixtures   # deterministic; also writes secrets/demo-keys.json
-npm test
-npm run proof:health        # probes hosted proof-server (no Docker)
-```
+**Not proved**: that prices reflect the real market, that `declaredReserves`
+matches real assets, that the batch covers all users, that `userIdHash` maps to
+a real customer, or that the exchange's internal ledger is honest. Prices are
+operator-supplied public inputs, not an oracle. See
+[docs/TRUST-BOUNDARY.md](docs/TRUST-BOUNDARY.md).
 
-`generate:fixtures` is deterministic: demo keys are derived from a fixed
-label, so fixtures never churn and a fresh clone can run `npm test` and the
-`attest` demo without any gitignored secrets file.
+## Hackathon submission
 
-## Demo commands
+This repo is the Wave 3 submission for the Midnight Buildathon. Submission
+materials:
 
-Verified locally on Node 22.23.4 against Compact 0.31.1:
+- public GitHub repository, tagged `midnightntwrk`, Apache-2.0;
+- this README (setup, architecture, Midnight integration);
+- [docs/PROGRESS-WAVE3.md](docs/PROGRESS-WAVE3.md) — progress made during Wave 3;
+- [docs/HACKATHON-MVP-SCOPE.md](docs/HACKATHON-MVP-SCOPE.md) — scope and acceptance;
+- slide deck and demo video (kept with the submission entry);
+- compiled Compact artifacts under `contract/managed/`.
 
-| Command | Expectation |
-| --- | --- |
-| `npm run proof:health` | Hosted proof-server `/health` ok, version `8.1.0`, proof `V2` |
-| `npm run read` | Public fields (no proof / no DUST). Fixtures until deploy. |
-| `npm run attest -- member` | Local circuit success; Preprod tx when secrets exist |
-| `npm run attest -- outsider` | Assert fails; no successful tx |
-| `npm run attest -- wrong-leaf` | Assert fails; no successful tx |
-| `npm run publish` | Prep; lists missing secrets if any; does not invent keys |
-| `npm run wallet:address -- --generate-seed` | Offline Preprod `mn_addr_preprod1…` address for the faucet |
+## Archived Wave 3 membership demo
 
-## Secrets required for Preprod deploy (operator-supplied)
-
-Copy `.env.example` → `.env`. Scripts **do not invent** wallet keys.
-
-`.env` is gitignored (`.gitignore` line `.env`) and every CLI entry point loads
-it automatically, so values there behave like exported variables. A variable
-already set in the shell wins over the file, which keeps CI overrides and
-one-off runs predictable.
-
-| Env | Purpose |
-| --- | --- |
-| `BLOCKFROST_PROJECT_ID` | Preprod indexer + node RPC (Blockfrost). Retired Midnight-hosted RPC/indexer. |
-| `MIDNIGHT_WALLET_SEED` **or** `MIDNIGHT_WALLET_MNEMONIC` | Exactly one. Fund via faucet; wait for DUST. |
-| `MIDNIGHT_WALLET_ADDRESS` | Derived `mn_addr_preprod1…` address for the faucet. Public; written by `wallet:address`. |
-| `PRIVATE_STATE_PASSWORD` | ≥16 chars for midnight-js private-state store |
-| `CONTRACT_ADDRESS` | After deploy, for publish/attest/read |
-| `MIDNIGHT_PROOF_SERVER_URL` | Optional; default hosted Preprod URL above |
-
-Faucet: `https://midnight-tmnight-preprod.nethermind.dev/` (also reachable at
-`https://faucet.preprod.midnight.network/`)
-
-### Faucet and DUST checklist
-
-Findings from the 2026-11-06 local run:
-
-- The faucet accepts **only** an unshielded `mn_addr_preprod1…` address, and
-  each request sends 5,000 tNIGHT. Shielded and DUST addresses are rejected.
-- `POST /api/drips` enforces **Cloudflare Turnstile** (`X-Captcha-Token`):
-  without a solved challenge it answers `403 Captcha verification failed`.
-  The claim therefore **cannot be automated unattended** — a human must solve
-  the challenge in a browser.
-- Get the address to paste with `npm run wallet:address`. It derives the
-  address offline, writes `MIDNIGHT_WALLET_SEED` and `MIDNIGHT_WALLET_ADDRESS`
-  into the gitignored `.env` (mode `0600`), and spends nothing. Add
-  `-- --generate-seed` once to create a seed; pass `-- --no-save` to print only.
-- Holding tNIGHT generates no DUST on its own: the tNIGHT must be
-  **registered** for tDUST generation, and DUST accrues over time (roughly a
-  week to refill a full cap). A wallet right after the faucet drip has no DUST
-  yet and cannot pay fees.
-- Blockfrost is still mandatory: the Midnight-hosted Preprod indexer/RPC were
-  retired on 2026-10-09 and now answer `410 ENDPOINT_DECOMMISSIONED`.
-
-**Preprod status:** contract **not deployed** in this environment. Hosted
-proof-server is reachable; Blockfrost token + wallet seed/mnemonic + DUST are
-still required from the operator before a real publish tx.
-
-Known gap: this tree has **no deploy or wallet-sync implementation** yet.
-`src/publish.ts` builds the payload and provider stack but never submits, and
-`createProofStack` returns `publicDataProvider: null` without Blockfrost. A
-real Preprod run needs a `deployContract`/`callTx` path plus a synced wallet
-before the on-chain demo can be claimed.
-
-## reportRef
-
-- URL: `https://ardmere.github.io/docs/reports/exchange-comparison.html`
-- Digest: SHA-256(UTF-8 URL) → `fixtures/report-ref.json`
-- Snapshot id (demo): UTF-8 `ardmere-midnight-wave3-demo-v1` padded to 32 bytes
+The earlier "signed-root + membership" demo (`por_snapshot.compact` +
+`schnorr.compact`, 8 leaves) is kept in-tree for regression tests only. It is not
+the submission target; see [docs/ARCHIVE.md](docs/ARCHIVE.md).
 
 ## License
 
-Apache-2.0. Midnight-related Compact and TypeScript in this repository are
-Apache-2.0 per Wave 3 rules. Do not copy MIT site-repo Go/Solidity into this
-tree.
+Apache-2.0. Midnight-related Compact and TypeScript code in this repository is
+released under Apache-2.0.

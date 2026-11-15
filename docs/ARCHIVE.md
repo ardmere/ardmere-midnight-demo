@@ -1,25 +1,32 @@
-# Wave 3 demo archive
+# Archived Wave 3 membership demo
 
-## Archived branch
+The earlier Ardmere × Midnight Wave 3 "signed root + membership" demo is kept
+**in-tree for regression tests only**. It is not the hackathon submission
+target.
 
-| Branch | Contents |
+## Where the code lives
+
+| Path | Contents |
 | --- | --- |
-| **`cursor/archive-wave3-signed-root-demo-0c01`** | Full snapshot of the Ardmere × Midnight Wave 3 "signed root + Schnorr `publishSnapshot` + `derivePublicKey` membership `attestInclusion`" demo, including deterministic fixtures, `.env` loading, Preprod faucet address derivation, and the hosted proof-server probe. |
+| `contract/por_snapshot.compact` | Signed-root membership snapshot (8 leaves, depth 4) |
+| `contract/schnorr.compact` | Jubjub Schnorr polyfill used by the archived contract |
+| `src/attest.ts`, `src/localSim.ts`, `src/keys.ts`, `src/sign.ts` | Local simulation and demo commands |
+| `fixtures/tree.json`, `fixtures/vectors.json` | Deterministic archived fixtures |
+| `test/inclusion.test.ts`, `test/encode.test.ts` | Regression coverage |
 
-**Merge lineage**: started from `cursor/wave3-demo-scaffold-fb9d`, went through the toolchain and reproducibility fixes on `cursor/demo-reproducible-fixtures-wallet-0c01`, and was frozen at the archive point.
-
-## Purpose
-
-- The hackathon **no longer** uses this demo as the submission target.
-- The toolchain and Preprod configuration may be reused **read-only**; contract semantics are in `contract/por_snapshot.compact` and the archived branch README.
-- Fixes (toolchain only) may be cherry-picked from the archived branch into this MVP branch; **do not** keep adding PoR features on the archive.
+The old `cursor/archive-wave3-signed-root-demo-0c01` branch was removed when the
+repository history was reset to a single clean commit; the code above is the
+reference copy.
 
 ## What the archived demo proves
 
-- The publisher's Schnorr commitment to `(snapshotId, reportRef, merkleRoot)`.
-- A member can prove inclusion **without disclosing** the leaf and path.
-- It does **not** prove solvency, external reserves, or equivalence between an exchange Merkle root and the Compact root.
+- the publisher's Schnorr commitment to `(snapshotId, reportRef, merkleRoot)`;
+- a member can prove inclusion without disclosing the leaf and path;
+- it does **not** prove solvency, external reserves, or equivalence between an
+  exchange Merkle root and the Compact root.
 
 ## Current hackathon target
 
-See [HACKATHON-MVP-SCOPE.md](./HACKATHON-MVP-SCOPE.md): **standardized single-batch Merkle Sum liability snapshot + solvency inequality + user inclusion self-check**.
+See [HACKATHON-MVP-SCOPE.md](./HACKATHON-MVP-SCOPE.md): a standardized
+single-batch, three-asset signed Merkle Sum liability snapshot with per-user NAV
+and per-asset net-exposure checks.

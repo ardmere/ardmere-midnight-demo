@@ -1,0 +1,110 @@
+{
+  "seq": 1,
+  "timestamp": 1700000000,
+  "prices": {
+    "btc": "600",
+    "eth": "30",
+    "usdt": "1"
+  },
+  "declaredReserves": {
+    "btc": "137000000",
+    "eth": "547500000",
+    "usdt": "268000000000"
+  },
+  "mstRootHashHex": "115b66282ea7e65b206336935bdfbc1ad5f72de1a186a126897defffdabd34a2",
+  "liabilities": {
+    "btc": "117000000",
+    "eth": "497500000",
+    "usdt": "248000000000"
+  },
+  "gross": {
+    "btcPos": "148000000",
+    "btcNeg": "31000000",
+    "ethPos": "505000000",
+    "ethNeg": "7500000",
+    "usdtPos": "251000000000",
+    "usdtNeg": "3000000000"
+  },
+  "rngNonceHex": "5e3b664039f93d486ec030d520c69056",
+  "sampleInclusion": {
+    "leafIndex": 2,
+    "userIdHashHex": "089b3fa55c4c0095d74a14ce046668c002f90ca21518baa1f1e42f8740537c32",
+    "btc": "12000000",
+    "eth": "-5000000",
+    "usdt": "30000000000",
+    "leafHashHex": "6cb93f3756e4a90f9f1e689f710d475e8c103a8f4aa33ff5ed41e059c187521c",
+    "siblings": [
+      {
+        "siblingHashHex": "c01bbdeebb85d6b83caa4b3122470691cea7e07592c7707028f66501d4c12c65",
+        "siblingBtcPosSum": "0",
+        "siblingBtcNegSum": "3000000",
+        "siblingEthPosSum": "0",
+        "siblingEthNegSum": "2000000",
+        "siblingUsdtPosSum": "40000000000",
+        "siblingUsdtNegSum": "0",
+        "goesLeft": true
+      },
+      {
+        "siblingHashHex": "83f56e053b1ff2cb36d7e779a97d1018026e8fe488673c1bcdc64bdce7c37d63",
+        "siblingBtcPosSum": "50000000",
+        "siblingBtcNegSum": "20000000",
+        "siblingEthPosSum": "420000000",
+        "siblingEthNegSum": "0",
+        "siblingUsdtPosSum": "150000000000",
+        "siblingUsdtNegSum": "2000000000",
+        "goesLeft": false
+      },
+      {
+        "siblingHashHex": "5798587a0885d08f42828fe219ffcd22c70eceb0245755db00b3a8d1467c880c",
+        "siblingBtcPosSum": "86000000",
+        "siblingBtcNegSum": "8000000",
+        "siblingEthPosSum": "85000000",
+        "siblingEthNegSum": "500000",
+        "siblingUsdtPosSum": "31000000000",
+        "siblingUsdtNegSum": "1000000000",
+        "goesLeft": true
+      },
+      {
+        "siblingHashHex": "7900a179e2d7d10605958a380e7fb795e429eb40b4bd32dea02684548acb0f78",
+        "siblingBtcPosSum": "0",
+        "siblingBtcNegSum": "0",
+        "siblingEthPosSum": "0",
+        "siblingEthNegSum": "0",
+        "siblingUsdtPosSum": "0",
+        "siblingUsdtNegSum": "0",
+        "goesLeft": true
+      },
+      {
+        "siblingHashHex": "b995e23260287b2bb407c3a5fee49c653e6934676439efc9986f93516536eaf7",
+        "siblingBtcPosSum": "0",
+        "siblingBtcNegSum": "0",
+        "siblingEthPosSum": "0",
+        "siblingEthNegSum": "0",
+        "siblingUsdtPosSum": "0",
+        "siblingUsdtNegSum": "0",
+        "goesLeft": true
+      },
+      {
+        "siblingHashHex": "511cfbc0f335b593ab4d46259251cbf37cd90831d68310c539186d36d7423a1a",
+        "siblingBtcPosSum": "0",
+        "siblingBtcNegSum": "0",
+        "siblingEthPosSum": "0",
+        "siblingEthNegSum": "0",
+        "siblingUsdtPosSum": "0",
+        "siblingUsdtNegSum": "0",
+        "goesLeft": true
+      }
+    ],
+    "mstRootHashHex": "115b66282ea7e65b206336935bdfbc1ad5f72de1a186a126897defffdabd34a2",
+    "liabilities": {
+      "btc": "117000000",
+      "eth": "497500000",
+      "usdt": "248000000000"
+    },
+    "prices": {
+      "btc": "600",
+      "eth": "30",
+      "usdt": "1"
+    }
+  }
+}

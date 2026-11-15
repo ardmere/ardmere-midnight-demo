@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "../../../../",
+  "sources": ["contract/mst_hash.compact"],
+  "names": [],
+  "mappings": ";;;;;;;;;;;EAUA;;;;;;;;;;;;;GAkJC;EAlJD;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;GAkJC;;;;;;;;;;;;;;;;;;;;;;;;;"
+}

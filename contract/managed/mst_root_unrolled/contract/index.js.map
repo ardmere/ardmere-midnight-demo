@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "../../../../",
+  "sources": ["contract/mst_root_unrolled.compact"],
+  "names": [],
+  "mappings": ";;;;;;;;;;;EAIA;;;;;;;;;;;;;GA8VC;EA9VD;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;GA8VC;;;;;;;;;;;;;;;;;;;;;;;;;"
+}

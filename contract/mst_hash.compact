@@ -1,0 +1,156 @@
+// Copyright 2026 Ardmere
+// SPDX-License-Identifier: Apache-2.0
+//
+// Merkle Sum Tree primitives for a single batch with three liabilities:
+// BTC, ETH and USDT. Each leaf asset balance is signed, represented as a
+// non-negative long (pos) and short (neg) magnitude; net = pos - neg.
+//
+// Units: BTC 1e-8, ETH 1e-8, USDT 1e-6 (all Uint<64>).
+// Aggregates: Uint<128> (64 leaves x Uint<64> fits comfortably).
+
+pragma language_version 0.23;
+
+module mst_hash {
+  import CompactStandardLibrary;
+
+  export struct MstNode {
+    hash: Bytes<32>;
+    btcPosSum: Uint<128>;
+    btcNegSum: Uint<128>;
+    ethPosSum: Uint<128>;
+    ethNegSum: Uint<128>;
+    usdtPosSum: Uint<128>;
+    usdtNegSum: Uint<128>;
+  }
+
+  struct LeafPreimage {
+    domain: Bytes<32>;
+    userIdHash: Bytes<32>;
+    btcPos: Uint<64>;
+    btcNeg: Uint<64>;
+    ethPos: Uint<64>;
+    ethNeg: Uint<64>;
+    usdtPos: Uint<64>;
+    usdtNeg: Uint<64>;
+  }
+
+  struct ParentPreimage {
+    domain: Bytes<32>;
+    leftHash: Bytes<32>;
+    rightHash: Bytes<32>;
+    btcPosSum: Uint<128>;
+    btcNegSum: Uint<128>;
+    ethPosSum: Uint<128>;
+    ethNegSum: Uint<128>;
+    usdtPosSum: Uint<128>;
+    usdtNegSum: Uint<128>;
+  }
+
+  export pure circuit leafHash(
+    userIdHash: Bytes<32>,
+    btcPos: Uint<64>,
+    btcNeg: Uint<64>,
+    ethPos: Uint<64>,
+    ethNeg: Uint<64>,
+    usdtPos: Uint<64>,
+    usdtNeg: Uint<64>
+  ): Bytes<32> {
+    return persistentHash<LeafPreimage>(
+      LeafPreimage {
+        domain: pad(32, "ardmere:mst:leaf:v3"),
+        userIdHash: userIdHash,
+        btcPos: btcPos,
+        btcNeg: btcNeg,
+        ethPos: ethPos,
+        ethNeg: ethNeg,
+        usdtPos: usdtPos,
+        usdtNeg: usdtNeg
+      }
+    );
+  }
+
+  export pure circuit parentHash(
+    left: MstNode,
+    right: MstNode
+  ): MstNode {
+    const btcPosSum: Uint<128> = (left.btcPosSum + right.btcPosSum) as Uint<128>;
+    const btcNegSum: Uint<128> = (left.btcNegSum + right.btcNegSum) as Uint<128>;
+    const ethPosSum: Uint<128> = (left.ethPosSum + right.ethPosSum) as Uint<128>;
+    const ethNegSum: Uint<128> = (left.ethNegSum + right.ethNegSum) as Uint<128>;
+    const usdtPosSum: Uint<128> = (left.usdtPosSum + right.usdtPosSum) as Uint<128>;
+    const usdtNegSum: Uint<128> = (left.usdtNegSum + right.usdtNegSum) as Uint<128>;
+    const hash = persistentHash<ParentPreimage>(
+      ParentPreimage {
+        domain: pad(32, "ardmere:mst:parent:v3"),
+        leftHash: left.hash,
+        rightHash: right.hash,
+        btcPosSum: btcPosSum,
+        btcNegSum: btcNegSum,
+        ethPosSum: ethPosSum,
+        ethNegSum: ethNegSum,
+        usdtPosSum: usdtPosSum,
+        usdtNegSum: usdtNegSum
+      }
+    );
+    return MstNode {
+      hash: hash,
+      btcPosSum: btcPosSum,
+      btcNegSum: btcNegSum,
+      ethPosSum: ethPosSum,
+      ethNegSum: ethNegSum,
+      usdtPosSum: usdtPosSum,
+      usdtNegSum: usdtNegSum
+    };
+  }
+
+  /** A zero-balance leaf is padding and is exempt from the NAV check. */
+  export pure circuit isPadding(
+    btcPos: Uint<64>,
+    btcNeg: Uint<64>,
+    ethPos: Uint<64>,
+    ethNeg: Uint<64>,
+    usdtPos: Uint<64>,
+    usdtNeg: Uint<64>
+  ): Boolean {
+    return btcPos == 0 && btcNeg == 0 &&
+           ethPos == 0 && ethNeg == 0 &&
+           usdtPos == 0 && usdtNeg == 0;
+  }
+
+  /** Canonical signed magnitude: at most one of pos/neg is non-zero. */
+  export pure circuit signedValid(pos: Uint<64>, neg: Uint<64>): Boolean {
+    return pos == 0 || neg == 0;
+  }
+
+  /**
+   * Per-user net asset value in micro-USDT (1e-6 USDT):
+   * sum(pos_i * price_i) > sum(neg_i * price_i), with prices supplied as
+   * public circuit inputs (micro-USDT per smallest asset unit).
+   */
+  export pure circuit navPositive(
+    btcPos: Uint<64>,
+    btcNeg: Uint<64>,
+    ethPos: Uint<64>,
+    ethNeg: Uint<64>,
+    usdtPos: Uint<64>,
+    usdtNeg: Uint<64>,
+    priceBtc: Uint<64>,
+    priceEth: Uint<64>,
+    priceUsdt: Uint<64>
+  ): Boolean {
+    // Field arithmetic keeps the products from tripping Uint overflow
+    // analysis; the final cast bounds the result to Uint<128>.
+    const posValue: Uint<128> = (
+      (btcPos as Field) * (priceBtc as Field) +
+      (ethPos as Field) * (priceEth as Field) +
+      (usdtPos as Field) * (priceUsdt as Field)
+    ) as Uint<128>;
+    const negValue: Uint<128> = (
+      (btcNeg as Field) * (priceBtc as Field) +
+      (ethNeg as Field) * (priceEth as Field) +
+      (usdtNeg as Field) * (priceUsdt as Field)
+    ) as Uint<128>;
+    return posValue > negValue;
+  }
+
+}

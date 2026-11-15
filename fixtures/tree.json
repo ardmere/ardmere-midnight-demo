@@ -1,0 +1,186 @@
+{
+  "depth": 4,
+  "leafCount": 8,
+  "merkleRootFieldHex": "2df4ee90bf9156e6b46bc50f7d81570b9162de33e30daf640430f4b9e0f6d5a3",
+  "leavesHex": [
+    "1dc88207b6aa5cb49c50e8be49e6a73cfe9340e0fd63ea94be4fd6d2fd9b99ad",
+    "a392abb89b8f7859e9853470473f809f087603fe97b5eb938842e903e46cc921",
+    "f6c11f7d0af103a843d870e5e627ec34f278623ae9e4e9c9c1743e81e2e1bb82",
+    "7f6274f2beb7fe948f508cdf2afba9a344b28328ba69b1681dcda52d2cf4645a",
+    "3279447a3ec8634f66780d42ec1bed6569a95adc0fe6a8a8244edce3df23acc4",
+    "15ae25c9ff35bdeba356f7779efb4bfb75b3e3b0d65abc4020251c560ea49277",
+    "0eef9c6a87bf1cb65f14ea7b7ec1fe556e9a16492137c14e32dcd41d70adfd3e",
+    "20992b82847bf81d633d4fd44648cacaf8e23907c4d5ce0f5b9b0abff4234b93"
+  ],
+  "paths": [
+    {
+      "leafHex": "1dc88207b6aa5cb49c50e8be49e6a73cfe9340e0fd63ea94be4fd6d2fd9b99ad",
+      "path": [
+        {
+          "siblingFieldHex": "a63f0df192dcb4449a308f6b6e3499501b47af670946a16fffa149e4a19a3a",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "1f22e4a4b2afbdd1a05f57476a33ee55efc370102957238d379a7b22d451a7ac",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "48bd994753a77986539a0ab7274fbe36fb087ce201b6bbcea9c1e05b6376fe8a",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "0",
+          "goes_left": true
+        }
+      ]
+    },
+    {
+      "leafHex": "a392abb89b8f7859e9853470473f809f087603fe97b5eb938842e903e46cc921",
+      "path": [
+        {
+          "siblingFieldHex": "7b3314884a9e9eebbe373e92e5a58c579efd1fea6e06fef989f6dd547cde18",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "1f22e4a4b2afbdd1a05f57476a33ee55efc370102957238d379a7b22d451a7ac",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "48bd994753a77986539a0ab7274fbe36fb087ce201b6bbcea9c1e05b6376fe8a",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "0",
+          "goes_left": true
+        }
+      ]
+    },
+    {
+      "leafHex": "f6c11f7d0af103a843d870e5e627ec34f278623ae9e4e9c9c1743e81e2e1bb82",
+      "path": [
+        {
+          "siblingFieldHex": "e3dae13e5d90f48368b9e179322302bda37e73329b53d9d54b3ca4c0019496",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "6bf96bf506256a3d1a9a82d3e71ecc33948d4f545c55068e6802d35cbfbf1ca1",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "48bd994753a77986539a0ab7274fbe36fb087ce201b6bbcea9c1e05b6376fe8a",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "0",
+          "goes_left": true
+        }
+      ]
+    },
+    {
+      "leafHex": "7f6274f2beb7fe948f508cdf2afba9a344b28328ba69b1681dcda52d2cf4645a",
+      "path": [
+        {
+          "siblingFieldHex": "72d45f447ebbcd506f8e2c89ee7efa4bb5a2255aecf0c826a8ff18484d386b",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "6bf96bf506256a3d1a9a82d3e71ecc33948d4f545c55068e6802d35cbfbf1ca1",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "48bd994753a77986539a0ab7274fbe36fb087ce201b6bbcea9c1e05b6376fe8a",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "0",
+          "goes_left": true
+        }
+      ]
+    },
+    {
+      "leafHex": "3279447a3ec8634f66780d42ec1bed6569a95adc0fe6a8a8244edce3df23acc4",
+      "path": [
+        {
+          "siblingFieldHex": "1d1243b770a412a90a6855d8e13f2e6761e1133573639f3f79e3d0f5f18114",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "e12445808ff0140b399478af58fd977402192b6f16699c9bdd7c6dc0ae9b78c",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "2531a0909a8bd30e37b63304c5c4f6a034c0b2d3a2ff9279a3dfeed8e8af7693",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "0",
+          "goes_left": true
+        }
+      ]
+    },
+    {
+      "leafHex": "15ae25c9ff35bdeba356f7779efb4bfb75b3e3b0d65abc4020251c560ea49277",
+      "path": [
+        {
+          "siblingFieldHex": "5037b0f4b533f698827f04ebc35a2c22334df7b94770666aba710939f17344",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "e12445808ff0140b399478af58fd977402192b6f16699c9bdd7c6dc0ae9b78c",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "2531a0909a8bd30e37b63304c5c4f6a034c0b2d3a2ff9279a3dfeed8e8af7693",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "0",
+          "goes_left": true
+        }
+      ]
+    },
+    {
+      "leafHex": "0eef9c6a87bf1cb65f14ea7b7ec1fe556e9a16492137c14e32dcd41d70adfd3e",
+      "path": [
+        {
+          "siblingFieldHex": "93ecf1e8b26d9f488a08f2d59cc99a0bdcfbd28b0869454f0126f4b88dfa78",
+          "goes_left": true
+        },
+        {
+          "siblingFieldHex": "f80d46bbf1a4b47a67d5ea369988748b9cea3e8990b9dd62d59d6800b597858",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "2531a0909a8bd30e37b63304c5c4f6a034c0b2d3a2ff9279a3dfeed8e8af7693",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "0",
+          "goes_left": true
+        }
+      ]
+    },
+    {
+      "leafHex": "20992b82847bf81d633d4fd44648cacaf8e23907c4d5ce0f5b9b0abff4234b93",
+      "path": [
+        {
+          "siblingFieldHex": "fc4d2b4d724f009db182f8d7f158459e145027ccc31f9ad1f5e86c817bbbbc",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "f80d46bbf1a4b47a67d5ea369988748b9cea3e8990b9dd62d59d6800b597858",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "2531a0909a8bd30e37b63304c5c4f6a034c0b2d3a2ff9279a3dfeed8e8af7693",
+          "goes_left": false
+        },
+        {
+          "siblingFieldHex": "0",
+          "goes_left": true
+        }
+      ]
+    }
+  ],
+  "note": "Member secret keys are NOT in this file; see secrets/demo-keys.json (gitignored)."
+}

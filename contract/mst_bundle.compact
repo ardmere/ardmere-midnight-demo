@@ -1,0 +1,103 @@
+// Copyright 2026 Ardmere
+// SPDX-License-Identifier: Apache-2.0
+//
+// Pure-circuit bundle for the 64-leaf, three-asset Merkle Sum Tree.
+// Each asset is signed, represented as (pos, neg) magnitudes; net = pos - neg.
+// Used by TypeScript tests and off-chain tooling.
+
+pragma language_version 0.23;
+
+import CompactStandardLibrary;
+import "./mst_hash" prefix Mst_;
+import "./mst_root_unrolled" prefix MstRoot_;
+
+export struct MstNode {
+  hash: Bytes<32>;
+  btcPosSum: Uint<128>;
+  btcNegSum: Uint<128>;
+  ethPosSum: Uint<128>;
+  ethNegSum: Uint<128>;
+  usdtPosSum: Uint<128>;
+  usdtNegSum: Uint<128>;
+}
+
+struct ParentPreimage {
+  domain: Bytes<32>;
+  leftHash: Bytes<32>;
+  rightHash: Bytes<32>;
+  btcPosSum: Uint<128>;
+  btcNegSum: Uint<128>;
+  ethPosSum: Uint<128>;
+  ethNegSum: Uint<128>;
+  usdtPosSum: Uint<128>;
+  usdtNegSum: Uint<128>;
+}
+
+export pure circuit leafHash(
+  userIdHash: Bytes<32>,
+  btcPos: Uint<64>,
+  btcNeg: Uint<64>,
+  ethPos: Uint<64>,
+  ethNeg: Uint<64>,
+  usdtPos: Uint<64>,
+  usdtNeg: Uint<64>
+): Bytes<32> {
+  return Mst_leafHash(userIdHash, btcPos, btcNeg, ethPos, ethNeg, usdtPos, usdtNeg);
+}
+
+export pure circuit parentHash(
+  left: MstNode,
+  right: MstNode
+): MstNode {
+  const btcPosSum: Uint<128> = (left.btcPosSum + right.btcPosSum) as Uint<128>;
+  const btcNegSum: Uint<128> = (left.btcNegSum + right.btcNegSum) as Uint<128>;
+  const ethPosSum: Uint<128> = (left.ethPosSum + right.ethPosSum) as Uint<128>;
+  const ethNegSum: Uint<128> = (left.ethNegSum + right.ethNegSum) as Uint<128>;
+  const usdtPosSum: Uint<128> = (left.usdtPosSum + right.usdtPosSum) as Uint<128>;
+  const usdtNegSum: Uint<128> = (left.usdtNegSum + right.usdtNegSum) as Uint<128>;
+  const hash = persistentHash<ParentPreimage>(
+    ParentPreimage {
+      domain: pad(32, "ardmere:mst:parent:v3"),
+      leftHash: left.hash,
+      rightHash: right.hash,
+      btcPosSum: btcPosSum,
+      btcNegSum: btcNegSum,
+      ethPosSum: ethPosSum,
+      ethNegSum: ethNegSum,
+      usdtPosSum: usdtPosSum,
+      usdtNegSum: usdtNegSum
+    }
+  );
+  return MstNode {
+    hash: hash,
+    btcPosSum: btcPosSum,
+    btcNegSum: btcNegSum,
+    ethPosSum: ethPosSum,
+    ethNegSum: ethNegSum,
+    usdtPosSum: usdtPosSum,
+    usdtNegSum: usdtNegSum
+  };
+}
+
+export pure circuit mstRootFromLeaves(
+  userIds: Vector<64, Bytes<32>>,
+  btcPos: Vector<64, Uint<64>>,
+  btcNeg: Vector<64, Uint<64>>,
+  ethPos: Vector<64, Uint<64>>,
+  ethNeg: Vector<64, Uint<64>>,
+  usdtPos: Vector<64, Uint<64>>,
+  usdtNeg: Vector<64, Uint<64>>
+): MstNode {
+  const n = MstRoot_rootFrom64(
+    userIds, btcPos, btcNeg, ethPos, ethNeg, usdtPos, usdtNeg
+  );
+  return MstNode {
+    hash: n.hash,
+    btcPosSum: n.btcPosSum,
+    btcNegSum: n.btcNegSum,
+    ethPosSum: n.ethPosSum,
+    ethNegSum: n.ethNegSum,
+    usdtPosSum: n.usdtPosSum,
+    usdtNegSum: n.usdtNegSum
+  };
+}

@@ -1,0 +1,137 @@
+// Copyright 2026 Ardmere
+// SPDX-License-Identifier: Apache-2.0
+//
+// Standardized PoR hackathon MVP — 64-leaf, three-asset MST batch snapshot.
+//
+// Assets: BTC (1e-8), ETH (1e-8), USDT (1e-6); per-asset balances are signed
+// and represented as (pos, neg) magnitudes with net = pos - neg. Prices are
+// public circuit inputs (micro-USDT per smallest asset unit) and are written
+// to the ledger for auditability. Per-user NAV must be strictly positive;
+// per-asset net exposure must not exceed declared reserves.
+
+pragma language_version 0.23;
+
+import CompactStandardLibrary;
+import "./mst_hash" prefix Mst_;
+import "./mst_root_unrolled" prefix MstRoot_;
+
+export ledger authorityPk: Bytes<32>;
+export ledger snapshotSeq: Uint<64>;
+export ledger timestamp: Uint<64>;
+export ledger mstRoot: Bytes<32>;
+export ledger priceBtc: Uint<64>;
+export ledger priceEth: Uint<64>;
+export ledger priceUsdt: Uint<64>;
+export ledger declaredReservesBtc: Uint<64>;
+export ledger declaredReservesEth: Uint<64>;
+export ledger declaredReservesUsdt: Uint<64>;
+export ledger liabilitiesBtcPos: Uint<128>;
+export ledger liabilitiesBtcNeg: Uint<128>;
+export ledger liabilitiesEthPos: Uint<128>;
+export ledger liabilitiesEthNeg: Uint<128>;
+export ledger liabilitiesUsdtPos: Uint<128>;
+export ledger liabilitiesUsdtNeg: Uint<128>;
+export ledger published: Boolean;
+
+witness batchUserIds(): Vector<64, Bytes<32>>;
+witness batchBtcPos(): Vector<64, Uint<64>>;
+witness batchBtcNeg(): Vector<64, Uint<64>>;
+witness batchEthPos(): Vector<64, Uint<64>>;
+witness batchEthNeg(): Vector<64, Uint<64>>;
+witness batchUsdtPos(): Vector<64, Uint<64>>;
+witness batchUsdtNeg(): Vector<64, Uint<64>>;
+
+constructor(pk: Bytes<32>) {
+  authorityPk = disclose(pk);
+  published = false;
+  snapshotSeq = 0;
+  timestamp = 0;
+  mstRoot = pad(32, "");
+  priceBtc = 0;
+  priceEth = 0;
+  priceUsdt = 0;
+  declaredReservesBtc = 0;
+  declaredReservesEth = 0;
+  declaredReservesUsdt = 0;
+  liabilitiesBtcPos = 0;
+  liabilitiesBtcNeg = 0;
+  liabilitiesEthPos = 0;
+  liabilitiesEthNeg = 0;
+  liabilitiesUsdtPos = 0;
+  liabilitiesUsdtNeg = 0;
+}
+
+/**
+ * submitSnapshot: recompute the three-asset signed MST root from the private
+ * batch, enforce per-user NAV > 0, check per-asset net exposure against
+ * declared reserves, and write the public snapshot fields.
+ *
+ * The caller must be the authority: `authorityPk` holds the Zswap coin public
+ * key (`ownPublicKey().bytes`) of the deployer.
+ */
+export circuit submitSnapshot(
+  seq: Uint<64>,
+  ts: Uint<64>,
+  priceBtcArg: Uint<64>,
+  priceEthArg: Uint<64>,
+  priceUsdtArg: Uint<64>,
+  declaredReservesBtcArg: Uint<64>,
+  declaredReservesEthArg: Uint<64>,
+  declaredReservesUsdtArg: Uint<64>,
+  rootHash: Bytes<32>
+): [] {
+  assert(!published, "already published");
+  assert(ownPublicKey().bytes == authorityPk, "not authority");
+
+  // Prices are public inputs but must be positive and bounded so the
+  // Uint<128> NAV arithmetic cannot overflow.
+  assert(priceBtcArg > 0, "btc price must be positive");
+  assert(priceEthArg > 0, "eth price must be positive");
+  assert(priceUsdtArg > 0, "usdt price must be positive");
+  assert(priceBtcArg <= 1000000000000, "btc price too large");
+  assert(priceEthArg <= 1000000000000, "eth price too large");
+  assert(priceUsdtArg <= 1000000000000, "usdt price too large");
+
+  const userIds = batchUserIds();
+  const btcPos = batchBtcPos();
+  const btcNeg = batchBtcNeg();
+  const ethPos = batchEthPos();
+  const ethNeg = batchEthNeg();
+  const usdtPos = batchUsdtPos();
+  const usdtNeg = batchUsdtNeg();
+
+  // Signed-magnitude canonicality + per-user NAV > 0, both unrolled.
+  MstRoot_assertNavs(
+    btcPos, btcNeg, ethPos, ethNeg, usdtPos, usdtNeg,
+    priceBtcArg, priceEthArg, priceUsdtArg
+  );
+
+  const root = MstRoot_rootFrom64(
+    userIds, btcPos, btcNeg, ethPos, ethNeg, usdtPos, usdtNeg
+  );
+  assert(root.hash == rootHash, "root mismatch");
+
+  const btcReserve: Uint<128> = declaredReservesBtcArg as Uint<128>;
+  const ethReserve: Uint<128> = declaredReservesEthArg as Uint<128>;
+  const usdtReserve: Uint<128> = declaredReservesUsdtArg as Uint<128>;
+  assert(root.btcPosSum <= root.btcNegSum + btcReserve, "btc net exposure exceeds reserves");
+  assert(root.ethPosSum <= root.ethNegSum + ethReserve, "eth net exposure exceeds reserves");
+  assert(root.usdtPosSum <= root.usdtNegSum + usdtReserve, "usdt net exposure exceeds reserves");
+
+  snapshotSeq = disclose(seq);
+  timestamp = disclose(ts);
+  mstRoot = disclose(rootHash);
+  priceBtc = disclose(priceBtcArg);
+  priceEth = disclose(priceEthArg);
+  priceUsdt = disclose(priceUsdtArg);
+  declaredReservesBtc = disclose(declaredReservesBtcArg);
+  declaredReservesEth = disclose(declaredReservesEthArg);
+  declaredReservesUsdt = disclose(declaredReservesUsdtArg);
+  liabilitiesBtcPos = disclose(root.btcPosSum);
+  liabilitiesBtcNeg = disclose(root.btcNegSum);
+  liabilitiesEthPos = disclose(root.ethPosSum);
+  liabilitiesEthNeg = disclose(root.ethNegSum);
+  liabilitiesUsdtPos = disclose(root.usdtPosSum);
+  liabilitiesUsdtNeg = disclose(root.usdtNegSum);
+  published = true;
+}

@@ -1,0 +1,6 @@
+{
+  "url": "https://ardmere.github.io/docs/reports/exchange-comparison.html",
+  "reportRefHex": "ef760eed194cba67c15c4b304c739bb84d4b05a5801dc0ffbea3ddb86a621a41",
+  "algorithm": "SHA-256 over UTF-8 URL bytes",
+  "note": "Context pointer only. Midnight root is not an exchange Merkle root; Plonky2 is not verified on Midnight."
+}

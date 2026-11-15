@@ -1,0 +1,99 @@
+{
+  "leafCount": 64,
+  "activeLeafCount": 8,
+  "units": {
+    "btc": "1e-8 BTC",
+    "eth": "1e-8 ETH",
+    "usdt": "1e-6 USDT"
+  },
+  "prices": {
+    "btc": "600",
+    "eth": "30",
+    "usdt": "1"
+  },
+  "activeLeaves": [
+    {
+      "index": 0,
+      "userIdHashHex": "60df14145ceddf5bf180f1095d92311ee7c8d98c8515853c20ce717275b55a69",
+      "btc": "50000000",
+      "eth": "320000000",
+      "usdt": "-2000000000",
+      "leafHashHex": "5100c0c2c1065f3a0b33f01f24828bbe69cef34a21f1fbf3ba71150ec6ca7cb5"
+    },
+    {
+      "index": 1,
+      "userIdHashHex": "6c325d4b300781d82bf012ce7df130dafa41c9915f3d04d922dc7c2d1900f461",
+      "btc": "-20000000",
+      "eth": "100000000",
+      "usdt": "150000000000",
+      "leafHashHex": "31197813dbdbdedc6d27161c409fa439741d3844ed394d249b2cb6bd79e75d09"
+    },
+    {
+      "index": 2,
+      "userIdHashHex": "089b3fa55c4c0095d74a14ce046668c002f90ca21518baa1f1e42f8740537c32",
+      "btc": "12000000",
+      "eth": "-5000000",
+      "usdt": "30000000000",
+      "leafHashHex": "6cb93f3756e4a90f9f1e689f710d475e8c103a8f4aa33ff5ed41e059c187521c"
+    },
+    {
+      "index": 3,
+      "userIdHashHex": "5b3efe1b8aa90ab11736891d47501f672207e3421fd00e6b3ffc00d5f9378a78",
+      "btc": "-3000000",
+      "eth": "-2000000",
+      "usdt": "40000000000",
+      "leafHashHex": "c01bbdeebb85d6b83caa4b3122470691cea7e07592c7707028f66501d4c12c65"
+    },
+    {
+      "index": 4,
+      "userIdHashHex": "c34edb07c8439c92aee1ae2799ad656a8a4661112f85fd3d5efdc10a8931bedf",
+      "btc": "80000000",
+      "eth": "50000000",
+      "usdt": "-1000000000",
+      "leafHashHex": "dd15efa5a8d09047d00849c676d4e6027fa21ff739eaceea7ed05b1164066f05"
+    },
+    {
+      "index": 5,
+      "userIdHashHex": "bea2922e75356866a4fb5296237ca5638f9e56adad7b38cbe197de48ea618b39",
+      "btc": "5000000",
+      "eth": "10000000",
+      "usdt": "2000000000",
+      "leafHashHex": "45094d68e44a00f0031ed4ccb21a57978ec17d7cd7df317270b6807ed1c8e1b9"
+    },
+    {
+      "index": 6,
+      "userIdHashHex": "418047f3c8099bb00478c88fac0d1f186268251f501cf9766d3d743263962a57",
+      "btc": "-8000000",
+      "eth": "25000000",
+      "usdt": "25000000000",
+      "leafHashHex": "14ca50083e2fcd1ed99e7177e310d78075c5033231f0cc3b540d82f4d0a6a31c"
+    },
+    {
+      "index": 7,
+      "userIdHashHex": "35f00882a3237c2b11cf254b433f6cd1449965462434682176defbf7288a61be",
+      "btc": "1000000",
+      "eth": "-500000",
+      "usdt": "4000000000",
+      "leafHashHex": "1f2232706533ae7e5fca1e17f469c0c8da17df8169b8ec20b15509f4d2d98e02"
+    }
+  ],
+  "mstRootHashHex": "115b66282ea7e65b206336935bdfbc1ad5f72de1a186a126897defffdabd34a2",
+  "liabilities": {
+    "btc": "117000000",
+    "eth": "497500000",
+    "usdt": "248000000000"
+  },
+  "gross": {
+    "btcPos": "148000000",
+    "btcNeg": "31000000",
+    "ethPos": "505000000",
+    "ethNeg": "7500000",
+    "usdtPos": "251000000000",
+    "usdtNeg": "3000000000"
+  },
+  "declaredReservesDemo": {
+    "btc": "137000000",
+    "eth": "547500000",
+    "usdt": "268000000000"
+  }
+}

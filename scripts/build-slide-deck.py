@@ -233,35 +233,14 @@ def table(slide, x, y, w, h, rows, col_widths=None, font_size=12, header=True):
 # ---------------------------------------------------------------------------
 def slide_title(prs):
     s = blank(prs)
-    # left copy
     text(s, 0.85, 0.75, 6.5, 0.3, "MIDNIGHT BUILDATHON  ·  WAVE 3", size=11, color=ACCENT, bold=True)
-    text(s, 0.85, 1.35, 6.4, 2.2, "Standardized\nMidnight PoR", size=48, color=TEXT, bold=True, line_spacing=0.92)
-    text(
-        s,
-        0.85,
-        3.55,
-        5.9,
-        1.0,
-        "Private, verifiable proof of reserves\nfor BTC, ETH and USDT.",
-        size=20,
-        color=MUTED,
-        line_spacing=1.15,
-    )
-    text(
-        s,
-        0.85,
-        5.15,
-        6.2,
-        0.9,
-        "64 users  ·  three-asset Merkle Sum Tree  ·  one Compact proof",
-        size=13,
-        color=TEXT,
-    )
+    text(s, 0.85, 1.35, 6.6, 2.2, "Standardized\nMidnight PoR", size=46, color=TEXT, bold=True, line_spacing=0.92)
+    text(s, 0.85, 3.55, 5.9, 1.0, "A standard protocol for private,\nverifiable proof of reserves.", size=20, color=MUTED, line_spacing=1.15)
+    text(s, 0.85, 5.15, 6.6, 0.9, "Multi-asset Merkle Sum Tree  ·  one Compact proof", size=13, color=TEXT)
     pill(s, 0.85, 5.95, 1.05, 0.36, "APACHE 2.0", color=ACCENT)
     text(s, 2.05, 6.02, 4.8, 0.3, "github.com/ardmere/ardmere-midnight-demo", size=10.5, color=FAINT)
 
-    # right: MST motif
-    cx, cy = 10.35, 3.6
+    cx, cy = 10.35, 3.55
     ring = s.shapes.add_shape(MSO_SHAPE.OVAL, Inches(cx - 1.55), Inches(cy - 1.55), Inches(3.1), Inches(3.1))
     ring.fill.background()
     ring.line.color.rgb = LINE
@@ -275,8 +254,7 @@ def slide_title(prs):
     root.shadow.inherit = False
     text(s, cx - 0.5, cy - 1.3, 1.0, 0.45, "ROOT", size=10, color=BG, bold=True, align=PP_ALIGN.CENTER)
 
-    children = [("BTC", -1.05, 0.25), ("ETH", 0.0, 0.85), ("USDT", 1.05, 0.25)]
-    for label, dx, dy in children:
+    for dx, dy in [(-1.1, 0.35), (0.0, 0.95), (1.1, 0.35)]:
         x = cx + dx - 0.42
         y = cy + dy
         connector(s, cx, cy - 0.55, cx + dx, y + 0.1, color=LINE, width=1.4)
@@ -286,13 +264,16 @@ def slide_title(prs):
         node.line.color.rgb = ACCENT_2
         node.line.width = Pt(1.2)
         node.shadow.inherit = False
-        text(s, x, y + 0.22, 0.84, 0.3, label, size=9.5, color=TEXT, bold=True, align=PP_ALIGN.CENTER)
+        inner = s.shapes.add_shape(MSO_SHAPE.OVAL, Inches(x + 0.34), Inches(y + 0.34), Inches(0.16), Inches(0.16))
+        inner.fill.solid()
+        inner.fill.fore_color.rgb = ACCENT
+        inner.line.fill.background()
+        inner.shadow.inherit = False
 
-    # leaves
-    for i in range(6):
-        x = cx - 1.6 + i * 0.64
-        y = cy + 1.95
-        connector(s, cx, cy + 0.45, x + 0.1, y, color=LINE, width=0.9)
+    for i in range(8):
+        x = cx - 1.75 + i * 0.5
+        y = cy + 2.0
+        connector(s, cx - 1.1 + (i % 3) * 1.1, cy + 1.25, x + 0.1, y, color=LINE, width=0.8)
         leaf = s.shapes.add_shape(MSO_SHAPE.OVAL, Inches(x), Inches(y), Inches(0.2), Inches(0.2))
         leaf.fill.solid()
         leaf.fill.fore_color.rgb = FAINT
@@ -300,229 +281,230 @@ def slide_title(prs):
         leaf.shadow.inherit = False
 
     footer(s, 1)
-    notes(
-        s,
-        "Wave 3 submission for the Midnight Buildathon. The deck covers the problem, "
-        "the signed three-asset MST design, the Compact circuit, the local-chain reference run, "
-        "the trust boundary and the roadmap.",
-    )
+    notes(s, "Wave 3 submission for the Midnight Buildathon. The deck covers the industry problem, the standard protocol, why Midnight, the reference demo and the path to production.")
 
 
-def slide_problem(prs):
+def slide_thesis(prs):
     s = blank(prs)
-    kicker(s, "The problem")
-    title(s, "Reserve reports are trusted, not verified.")
-    text(
-        s,
-        0.72,
-        1.55,
-        11.6,
-        0.7,
-        "A published root and a PDF do not let a user check inclusion, and publishing balances to make them verifiable destroys privacy.",
-        size=17,
-        color=MUTED,
-        line_spacing=1.1,
-    )
+    kicker(s, "Thesis")
+    title(s, "A standard protocol, not another PoR product.")
+    text(s, 0.72, 1.55, 11.6, 0.6, "One schema, one contract interface, one verifier — reusable by any exchange.", size=18, color=MUTED, line_spacing=1.1)
 
     cards = [
-        ("1", "Inclusion", "Users cannot prove their account is inside the published snapshot."),
-        ("2", "Solvency", "A single aggregate number does not show that every user has positive net assets."),
-        ("3", "Privacy", "Making the report verifiable by publishing per-user balances is not acceptable."),
+        ("Standard schema", "The same fields and encoding for every operator, so snapshots are comparable."),
+        ("Standard circuit", "The same guarantees — not a bespoke circuit per exchange."),
+        ("Standard verifier", "One verification path for users, regulators and independent verifiers."),
+    ]
+    for i, (head, body) in enumerate(cards):
+        x = 0.72 + i * 4.05
+        rect(s, x, 2.5, 3.75, 2.15, fill=PANEL)
+        text(s, x + 0.28, 2.72, 3.2, 0.4, head, size=18, color=ACCENT, bold=True)
+        text(s, x + 0.28, 3.25, 3.2, 1.15, body, size=13, color=MUTED, line_spacing=1.12)
+
+    rect(s, 0.72, 5.15, 11.9, 1.0, fill=RGBColor.from_string("0F2A2A"), line=ACCENT)
+    text(s, 0.98, 5.38, 11.4, 0.5, "The reference implementation proves the standard is practical on Midnight.", size=17, color=TEXT, bold=True)
+    footer(s, 2)
+    notes(s, "The product is the standard, not a single exchange deployment. The reference implementation proves the standard is practical on Midnight.")
+
+
+def slide_pain(prs):
+    s = blank(prs)
+    kicker(s, "01 · Industry pain")
+    title(s, "Proof of reserves is still a specialist build.")
+    text(s, 0.72, 1.55, 11.6, 0.6, "Fragmented proofs, high cryptography cost, and verification that is too hard for users.", size=17, color=MUTED, line_spacing=1.1)
+
+    cards = [
+        ("01", "Fragmentation", "Every exchange builds its own proof system, circuit, tree and verifier. Regulators, users and independent third parties have no common verification tool, so snapshots cannot be compared across exchanges."),
+        ("02", "Cost and scarce expertise", "ZK circuits require specialist engineers and continuous security review; smaller operators cannot justify a bespoke build."),
+        ("03", "Verification is too hard", "Users are asked to verify global proofs themselves and follow long exchange runbooks — so most users never verify."),
     ]
     for i, (num, head, body) in enumerate(cards):
         x = 0.72 + i * 4.05
-        rect(s, x, 2.55, 3.75, 2.25, fill=PANEL)
-        text(s, x + 0.28, 2.75, 0.5, 0.4, num, size=13, color=ACCENT, bold=True)
-        text(s, x + 0.28, 3.15, 3.1, 0.4, head, size=20, color=TEXT, bold=True)
-        text(s, x + 0.28, 3.65, 3.15, 0.95, body, size=13.5, color=MUTED, line_spacing=1.1)
+        rect(s, x, 2.45, 3.75, 2.65, fill=PANEL)
+        text(s, x + 0.28, 2.65, 0.5, 0.4, num, size=10, color=ACCENT, bold=True)
+        text(s, x + 0.28, 3.02, 3.2, 0.45, head, size=16, color=TEXT, bold=True)
+        text(s, x + 0.28, 3.55, 3.2, 1.3, body, size=11.2, color=MUTED, line_spacing=1.08)
 
-    rect(s, 0.72, 5.2, 11.9, 1.15, fill=RGBColor.from_string("0F2A2A"), line=ACCENT_2)
-    text(
-        s,
-        0.98,
-        5.42,
-        11.4,
-        0.75,
-        "The missing primitive: a proof of inclusion + solvency that reveals nothing beyond the commitment.",
-        size=17,
-        color=TEXT,
-        bold=True,
-        italic=True,
-    )
-    footer(s, 2)
-    notes(s, "Three failures: inclusion, solvency and privacy. The MVP addresses all three at the batch level.")
-
-
-def slide_idea(prs):
-    s = blank(prs)
-    kicker(s, "The idea")
-    title(s, "A private batch, one public commitment.")
-    text(
-        s,
-        0.72,
-        1.55,
-        11.6,
-        0.6,
-        "The operator commits to a fixed 64-user batch; the circuit proves the batch is internally solvent; users verify inclusion off-chain.",
-        size=16,
-        color=MUTED,
-    )
-
-    steps = [
-        ("01", "Private batch", "64 leaves\nBTC / ETH / USDT"),
-        ("02", "Signed MST", "pos / neg per asset\n6 sums per node"),
-        ("03", "Compact proof", "root · NAV · reserves\nauthority"),
-        ("04", "Public snapshot", "root, prices, reserves\ngross sums"),
-        ("05", "Inclusion check", "6 siblings\nroot + NAV"),
-    ]
-    x0 = 0.72
-    width = 2.14
-    gap = 0.22
-    for i, (num, head, body) in enumerate(steps):
-        x = x0 + i * (width + gap)
-        rect(s, x, 2.45, width, 2.35, fill=PANEL if i < 4 else PANEL_2, line=LINE)
-        text(s, x + 0.2, 2.62, 0.6, 0.3, num, size=10, color=ACCENT, bold=True)
-        text(s, x + 0.2, 2.98, width - 0.35, 0.55, head, size=16, color=TEXT, bold=True)
-        text(s, x + 0.2, 3.6, width - 0.35, 1.0, body, size=12, color=MUTED, line_spacing=1.12)
-        if i < 4:
-            arrow(s, x + width + 0.03, 3.53, w=0.15, h=0.18)
-
-    rect(s, 0.72, 5.35, 11.9, 1.0, fill=PANEL, line=LINE)
-    text(s, 0.98, 5.58, 11.3, 0.5, "64 users  ·  3 assets  ·  1 root  ·  0 individual balances revealed", size=20, color=ACCENT, bold=True)
+    rect(s, 0.72, 5.5, 11.9, 0.9, fill=PANEL_2, line=LINE)
+    text(s, 0.98, 5.72, 11.4, 0.4, "No common verification path — for regulators, users, or independent verifiers.", size=14, color=TEXT)
     footer(s, 3)
-    notes(s, "The batch is fixed-size, so the tree shape and circuit are fixed. Signed balances allow long/short positions per asset.")
+    notes(s, "The assessment document highlights fragmentation and cryptographic cost; the third pain is the user-facing verification burden. Per-user NAV is treated as a baseline circuit requirement, not an industry pain.")
+
+
+def slide_who(prs):
+    s = blank(prs)
+    kicker(s, "01 · Who needs this")
+    title(s, "Who needs a standard PoR protocol?")
+    text(s, 0.72, 1.55, 11.6, 0.55, "The buyer is the exchange; the beneficiary is the user; the standard is the public good.", size=16, color=MUTED)
+
+    rows = [
+        ["Audience", "What they need"],
+        ["Mid-tier exchanges", "No in-house ZK team. Need a turnkey way to build, prove and publish a snapshot."],
+        ["Regulators, auditors and independent verifiers", "One schema and one verifier, so snapshots from different operators are comparable and independently checkable."],
+        ["Users", "A simple inclusion check against the anchored root — no global proof, no runbook, no public balance disclosure."],
+        ["Custodians / payment institutions", "The same reserve-attestation pattern beyond centralized exchanges."],
+    ]
+    table(s, 0.72, 2.25, 11.9, 3.45, rows, col_widths=[3.5, 8.4], font_size=12)
+
+    text(s, 0.72, 6.0, 11.9, 0.4, "Lower cost for operators, comparability for regulators and independent verifiers, and a one-path check for users.", size=12.5, color=MUTED)
+    footer(s, 4)
+    notes(s, "This is the demand side. The standard is a public good, but the exchange is the buyer because it reduces compliance and engineering cost. Regulators, auditors and independent verifiers get the same schema and the same check, which is what makes cross-exchange comparison possible.")
 
 
 def slide_why(prs):
     s = blank(prs)
-    kicker(s, "Why Midnight")
-    title(s, "Private witness, selective disclosure.")
-    text(
-        s,
-        0.72,
-        1.55,
-        11.6,
-        0.55,
-        "Compact gives us a small, auditable circuit; Midnight gives us private state and a public ledger that only sees what we choose to disclose.",
-        size=16,
-        color=MUTED,
-    )
+    kicker(s, "02 · Why Midnight")
+    title(s, "Midnight makes PoR a protocol, not a project.")
+    text(s, 0.72, 1.55, 11.6, 0.55, "Private witness, public verification, and automatic proof checking at submission.", size=16, color=MUTED)
 
     items = [
-        ("Compact", "TypeScript-like ZK contracts with explicit disclose()."),
-        ("Private state", "The 64 balances and userIdHash values stay in the witness."),
-        ("Public ledger", "Only root, prices, reserves and aggregate sums are stored."),
-        ("Proof server", "Generates the proof; Midnight verifies the state transition."),
+        ("Compact", "TypeScript-like ZK contracts with explicit disclose(); the circuit and verifier are generated by the compiler."),
+        ("Private state", "Balances and userIdHash values stay in the witness; they never reach the public ledger."),
+        ("Public ledger", "Only the anchored root, prices, reserves and aggregate values are stored."),
+        ("Automatic verification", "At submission, the contract verifies the global proof. An invalid proof cannot update state."),
     ]
     for i, (head, body) in enumerate(items):
         x = 0.72 + (i % 2) * 6.05
         y = 2.45 + (i // 2) * 1.7
-        rect(s, x, y, 5.75, 1.4, fill=PANEL)
+        rect(s, x, y, 5.75, 1.45, fill=PANEL)
         text(s, x + 0.25, y + 0.2, 5.2, 0.35, head, size=17, color=ACCENT, bold=True)
-        text(s, x + 0.25, y + 0.62, 5.2, 0.6, body, size=13, color=MUTED, line_spacing=1.08)
+        text(s, x + 0.25, y + 0.62, 5.2, 0.7, body, size=11.5, color=MUTED, line_spacing=1.05)
 
-    rect(s, 0.72, 6.08, 11.9, 0.62, fill=PANEL_2, line=LINE)
-    text(s, 0.95, 6.2, 11.4, 0.35, "No custom cryptography  ·  Apache-2.0  ·  Compact 0.31.1 / ledger-v8", size=12.5, color=TEXT)
-    footer(s, 4)
-    notes(s, "Midnight's selective disclosure model matches the PoR problem: prove a statement about private balances, publish only aggregates.")
+    rect(s, 0.72, 6.15, 11.9, 0.55, fill=PANEL_2, line=LINE)
+    text(s, 0.95, 6.27, 11.4, 0.3, "The global proof is a submission-time check, not a user task.", size=13, color=TEXT)
+    footer(s, 5)
+    notes(s, "This is the key UX shift. Midnight's dual-state model and on-chain verification make the protocol practical: the operator proves once, the contract verifies once, and users only check their own path.")
+
+
+def slide_problems(prs):
+    s = blank(prs)
+    kicker(s, "03 · Solution")
+    title(s, "Four hard problems. Four design responses.")
+    text(s, 0.72, 1.5, 11.6, 0.5, "The protocol has to stay usable as the operator, the asset set and the user base grow.", size=15, color=MUTED)
+
+    cards = [
+        ("01", "Scale", "Bounded batch proofs today; sharded batches and aggregation for large user bases."),
+        ("02", "Cross-chain reserves", "reserveProofHash anchor plus challenge-response and time locking for external assets."),
+        ("03", "Omission attacks", "Standardized inclusion path and a one-path local verifier / skill."),
+        ("04", "Compiler and cryptography trust", "Pin an audited Compact version and state the compiler / proof-system trust boundary explicitly."),
+    ]
+    for i, (num, head, body) in enumerate(cards):
+        x = 0.72 + (i % 2) * 6.05
+        y = 2.2 + (i // 2) * 1.75
+        rect(s, x, y, 5.75, 1.5, fill=PANEL)
+        text(s, x + 0.24, y + 0.18, 0.45, 0.3, num, size=10, color=ACCENT, bold=True)
+        text(s, x + 0.24, y + 0.5, 5.2, 0.35, head, size=15.5, color=TEXT, bold=True)
+        text(s, x + 0.24, y + 0.92, 5.2, 0.55, body, size=11, color=MUTED, line_spacing=1.05)
+
+    footer(s, 6)
+    notes(s, "These are the four bottlenecks from the assessment: scale, cross-chain asset anchoring, omission, and compiler trust. The next slides show how the protocol addresses them.")
 
 
 def slide_architecture(prs):
     s = blank(prs)
-    kicker(s, "Architecture")
-    title(s, "Off-chain tree, on-chain proof.")
-    text(s, 0.72, 1.5, 11.6, 0.5, "The chain verifies the proof and the state transition; it never sees the 64 leaves.", size=16, color=MUTED)
+    kicker(s, "03 · Solution")
+    title(s, "Exchange-local proving, chain-level verification.")
+    text(s, 0.72, 1.5, 11.6, 0.5, "The exchange keeps the data; Midnight keeps the commitment.", size=16, color=MUTED)
 
     boxes = [
-        ("OFF-CHAIN (TS)", "MST builder", "build tree, root,\ngross / net sums,\ninclusion paths", 0.72),
-        ("COMPACT", "submitSnapshot", "witness: 6 vectors\npublic: prices,\nreserves, root", 5.0),
-        ("MIDNIGHT", "Ledger snapshot", "authorityPk,\nroot, prices,\nreserves, sums", 9.28),
+        ("EXCHANGE LOCAL", "Build + prove", "MST builder, proof server, private balances, inclusion JSON.", 0.72),
+        ("MIDNIGHT CONTRACT", "Verify + anchor", "Verifies the global proof; stores root, prices, reserves, aggregates; authority.", 4.75),
+        ("USER", "Read + check one path", "Reads the anchored root; verifies inclusion locally with a skill.", 8.78),
     ]
     for label, head, body, x in boxes:
-        rect(s, x, 2.2, 3.35, 2.35, fill=PANEL)
-        text(s, x + 0.22, 2.38, 2.9, 0.25, label, size=9.5, color=ACCENT, bold=True)
-        text(s, x + 0.22, 2.7, 2.95, 0.4, head, size=18, color=TEXT, bold=True)
-        text(s, x + 0.22, 3.2, 2.95, 1.1, body, size=12, color=MUTED, line_spacing=1.15)
+        rect(s, x, 2.15, 3.8, 2.15, fill=PANEL)
+        text(s, x + 0.22, 2.35, 3.35, 0.25, label, size=9, color=ACCENT, bold=True)
+        text(s, x + 0.22, 2.68, 3.35, 0.4, head, size=16, color=TEXT, bold=True)
+        text(s, x + 0.22, 3.2, 3.35, 0.95, body, size=10.8, color=MUTED, line_spacing=1.08)
 
-    arrow(s, 4.15, 3.25, w=0.6, h=0.3)
-    arrow(s, 8.43, 3.25, w=0.6, h=0.3)
+    arrow(s, 4.55, 3.1, w=0.18, h=0.22)
+    arrow(s, 8.58, 3.1, w=0.18, h=0.22)
 
-    # user verifier
-    rect(s, 3.0, 5.25, 7.35, 1.2, fill=RGBColor.from_string("0F2A2A"), line=ACCENT)
-    text(s, 3.25, 5.42, 6.9, 0.35, "USER VERIFIER", size=9.5, color=ACCENT, bold=True)
-    text(s, 3.25, 5.72, 6.9, 0.55, "inclusion JSON  →  recompute 6 parents  →  compare root + NAV > 0", size=13, color=TEXT)
-    connector(s, 10.95, 4.55, 10.95, 5.85, color=LINE, width=1.2)
-    connector(s, 10.95, 5.85, 10.35, 5.85, color=LINE, width=1.2)
+    rect(s, 1.5, 5.2, 10.3, 1.15, fill=RGBColor.from_string("0F2A2A"), line=ACCENT)
+    text(s, 1.75, 5.38, 9.8, 0.3, "REGULATORS / AUDITORS / INDEPENDENT VERIFIERS", size=9, color=ACCENT, bold=True)
+    text(s, 1.75, 5.7, 9.8, 0.45, "Same public state and snapshot history; compare operators on one schema.", size=12.5, color=TEXT)
 
-    footer(s, 5)
-    notes(s, "Three layers: TypeScript builds the tree, the Compact circuit enforces the statement, and Midnight stores the aggregate snapshot. The verifier runs client-side.")
+    footer(s, 7)
+    notes(s, "The division of labor is deliberate. The exchange does the heavy proving; the contract does the global verification; the user does only a local path check; auditors read the same public state.")
 
 
-def slide_circuit(prs):
+def slide_schema(prs):
     s = blank(prs)
-    kicker(s, "Circuit")
-    title(s, "Six checks, one snapshot.")
+    kicker(s, "03 · Solution")
+    title(s, "One snapshot schema for every exchange.")
+    text(s, 0.72, 1.55, 11.6, 0.5, "Same fields, same encoding, same verifier.", size=16, color=MUTED)
+
+    rows = [
+        ["Field", "Purpose"],
+        ["snapshotId, timestamp", "Ordered snapshot identity and time anchor."],
+        ["merkleSumRoot", "The root users check their inclusion path against."],
+        ["declaredReserves", "Per-asset reserves, as a vector or a commitment."],
+        ["declaredLiabilities", "The aggregate liabilities proved by the circuit."],
+        ["reserveProofHash", "External-chain reserve anchor (production extension)."],
+        ["authority, published", "Who may publish; whether the snapshot is live."],
+    ]
+    table(s, 0.72, 2.2, 11.9, 3.55, rows, col_widths=[4.1, 7.8], font_size=12)
+    text(s, 0.72, 6.0, 11.9, 0.5, "The reference implementation covers the root, prices, reserves, aggregate sums, authority and published flag. reserveProofHash is the cross-chain extension point.", size=10.5, color=MUTED, line_spacing=1.1)
+    footer(s, 8)
+    notes(s, "Standardization is mostly about agreeing on fields and encoding. Once the schema is fixed, the same verifier works for every operator.")
+
+
+def slide_guarantees(prs):
+    s = blank(prs)
+    kicker(s, "03 · Solution")
+    title(s, "What the circuit actually guarantees.")
     checks = [
-        ("01", "Authority", "ownPublicKey().bytes == authorityPk"),
-        ("02", "Canonical signs", "pos == 0 || neg == 0 for every asset"),
-        ("03", "Per-user NAV", "Σ(pos·price) > Σ(neg·price) in micro-USDT"),
-        ("04", "Root equality", "recomputed MST root == published root"),
-        ("05", "Reserves", "posSum <= negSum + declaredReserves per asset"),
-        ("06", "One-shot", "assert(!published) before writing the snapshot"),
+        ("01", "Authority", "Only the operator's coin public key can publish."),
+        ("02", "Balance encoding", "Non-negative in the assessment MVP; canonical signed (pos, neg) in the reference. Encoding, not solvency."),
+        ("03", "Per-user solvency", "NAV > 0 at public prices; a single-asset net may be negative."),
+        ("04", "Root integrity", "The recomputed MST root equals the anchored root."),
+        ("05", "Reserve check", "Total or per-asset exposure is within declared reserves."),
+        ("06", "One-shot publication", "published prevents silent replacement."),
     ]
     for i, (num, head, body) in enumerate(checks):
         col = i % 3
         row = i // 3
         x = 0.72 + col * 4.02
-        y = 1.85 + row * 2.05
-        rect(s, x, y, 3.78, 1.75, fill=PANEL)
-        text(s, x + 0.22, y + 0.18, 0.45, 0.3, num, size=10, color=ACCENT, bold=True)
-        text(s, x + 0.22, y + 0.5, 3.3, 0.35, head, size=15.5, color=TEXT, bold=True)
-        text(s, x + 0.22, y + 0.95, 3.3, 0.65, body, size=11.5, color=MUTED, line_spacing=1.05)
+        y = 1.8 + row * 2.0
+        rect(s, x, y, 3.78, 1.7, fill=PANEL)
+        text(s, x + 0.22, y + 0.16, 0.45, 0.3, num, size=10, color=ACCENT, bold=True)
+        text(s, x + 0.22, y + 0.46, 3.3, 0.35, head, size=14.5, color=TEXT, bold=True)
+        text(s, x + 0.22, y + 0.86, 3.3, 0.75, body, size=10.2, color=MUTED, line_spacing=1.02)
 
-    rect(s, 0.72, 6.0, 11.9, 0.62, fill=PANEL_2, line=LINE)
-    text(s, 0.95, 6.14, 11.4, 0.3, "k = 20  ·  886,226 rows  ·  6 witness vectors  ·  ~291 MB prover  ·  ~2 min proof", size=12.5, color=ACCENT)
-    footer(s, 6)
-    notes(s, "The circuit is intentionally small in business logic: six checks. The bulk of the rows is hashing and range checks for the 64-leaf tree.")
+    rect(s, 0.72, 6.0, 11.9, 0.55, fill=PANEL_2, line=LINE)
+    text(s, 0.95, 6.12, 11.4, 0.3, "These are consistency guarantees; external truth is covered by the trust boundary.", size=12, color=TEXT)
+    footer(s, 9)
+    notes(s, "Balance encoding is not the solvency check. Because the reference supports lending and short positions, a single-asset net balance may be negative; solvency is enforced by per-user NAV > 0 at the submitted prices. In a single-asset deployment this reduces to net balance > 0.")
 
 
-def slide_data(prs):
+def slide_status(prs):
     s = blank(prs)
-    kicker(s, "Data model")
-    title(s, "Three assets, one tree.")
+    kicker(s, "03 · Solution")
+    title(s, "From assessment to a working reference.")
+    text(s, 0.72, 1.5, 11.6, 0.5, "The four-phase MVP plan is largely implemented; the user-facing skill is the next layer.", size=15, color=MUTED)
+
     rows = [
-        ["Asset", "Unit", "Decimals", "Demo price"],
-        ["BTC", "satoshi", "8", "600 µUSDT"],
-        ["ETH", "1e-8 ETH", "8", "30 µUSDT"],
-        ["USDT", "1e-6 USDT", "6", "1 µUSDT"],
+        ["Phase", "Plan", "Status"],
+        ["1", "MST library and serialization", "Done"],
+        ["2", "Compact contract and circuit tests", "Done"],
+        ["3", "Deploy and submit", "Local undeployed chain done; Preprod pending"],
+        ["4", "User verifier and documentation", "CLI and English docs done; one-click skill pending"],
     ]
-    table(s, 0.72, 1.8, 6.4, 2.35, rows, col_widths=[1.2, 2.0, 1.3, 1.9], font_size=13)
-    text(s, 0.72, 4.45, 6.4, 0.55, "Prices are public inputs, bounded to 0 < price <= 1e12.", size=12.5, color=MUTED)
+    table(s, 0.72, 2.15, 11.9, 2.55, rows, col_widths=[0.9, 5.4, 5.6], font_size=12)
 
-    rect(s, 7.55, 1.8, 5.05, 3.2, fill=PANEL)
-    text(s, 7.8, 2.0, 4.5, 0.3, "PUBLIC LEDGER", size=9.5, color=ACCENT, bold=True)
-    lines = [
-        "authorityPk : Bytes<32>",
-        "snapshotSeq, timestamp",
-        "mstRoot : Bytes<32>",
-        "priceBtc / priceEth / priceUsdt",
-        "declaredReserves BTC / ETH / USDT",
-        "liabilities*Pos / liabilities*Neg",
-        "published : Boolean",
-    ]
-    text(s, 7.8, 2.4, 4.5, 2.8, "\n".join(lines), size=12.5, color=TEXT, line_spacing=1.35)
-
-    rect(s, 0.72, 5.2, 11.9, 1.15, fill=PANEL_2, line=LINE)
-    text(s, 0.98, 5.4, 11.4, 0.35, "SIGNED BALANCES", size=9.5, color=ACCENT, bold=True)
-    text(s, 0.98, 5.72, 11.4, 0.4, "x = pos - neg  ·  pos, neg are Uint<64>  ·  node sums are Uint<128>  ·  zero-balance leaves are padding", size=12, color=TEXT)
-    footer(s, 7)
-    notes(s, "Three assets share one tree. Gross long and short sums are public; only the net matters for exposure. Prices are public inputs and are stored with the snapshot.")
+    rect(s, 0.72, 5.0, 11.9, 1.15, fill=PANEL)
+    text(s, 0.98, 5.18, 11.4, 0.3, "SCOPE NOTE", size=9, color=ACCENT, bold=True)
+    text(s, 0.98, 5.48, 11.4, 0.55, "The assessment MVP targets a single core asset, non-negative balances and total liabilities ≤ reserves. The reference already generalizes to multi-asset signed balances, per-user NAV and per-asset exposure.", size=10.5, color=MUTED, line_spacing=1.08)
+    footer(s, 10)
+    notes(s, "Be explicit about the delta: the reference implementation goes beyond the assessment's first MVP in asset modeling, but it still follows the same four-phase delivery path. The remaining gap is the user-facing skill and Preprod.")
 
 
-def slide_run(prs):
+def slide_results(prs):
     s = blank(prs)
-    kicker(s, "Reference run")
-    title(s, "A real transaction on undeployed.")
+    kicker(s, "04 · Demo")
+    title(s, "A real snapshot, verified end to end.")
+    text(s, 0.72, 1.55, 11.6, 0.5, "A real transaction on a local Midnight chain; the contract verified the proof before updating state.", size=14, color=MUTED)
+
     rows = [
         ["Field", "Value"],
         ["Contract", "301f868d…b877d117"],
@@ -531,81 +513,73 @@ def slide_run(prs):
         ["MST root", "115b6628…bd34a2"],
         ["Authority", "5aee546a…2ec69"],
     ]
-    table(s, 0.72, 1.78, 7.1, 3.5, rows, col_widths=[1.5, 5.3], font_size=11.5)
+    table(s, 0.72, 1.95, 7.1, 3.3, rows, col_widths=[1.5, 5.3], font_size=11.5)
 
-    # right metrics
-    rect(s, 8.1, 1.78, 4.5, 3.5, fill=PANEL)
-    text(s, 8.35, 1.98, 3.9, 0.3, "SNAPSHOT AT BLOCK 32", size=9.5, color=ACCENT, bold=True)
-    metrics = [
-        ("BTC", "117.0M", "net liabilities"),
-        ("ETH", "497.5M", "net liabilities"),
-        ("USDT", "248.0B", "net liabilities"),
-    ]
-    for i, (asset, value, label) in enumerate(metrics):
-        y = 2.4 + i * 0.88
-        text(s, 8.35, y, 0.9, 0.3, asset, size=11, color=MUTED, bold=True)
-        text(s, 9.2, y - 0.05, 1.54, 0.35, value, size=18, color=TEXT, bold=True)
-        text(s, 10.9, y, 1.5, 0.3, label, size=9.5, color=FAINT)
+    rect(s, 8.1, 1.95, 4.5, 3.3, fill=PANEL)
+    text(s, 8.35, 2.15, 3.9, 0.3, "SNAPSHOT VERIFICATION", size=9.5, color=ACCENT, bold=True)
+    checks = [("published", "true"), ("exposure checks", "pass"), ("inclusion check", "pass"), ("test suite", "37 passed")]
+    for i, (label, value) in enumerate(checks):
+        y = 2.58 + i * 0.62
+        text(s, 8.35, y, 2.4, 0.3, label, size=11.5, color=MUTED)
+        text(s, 10.55, y, 1.8, 0.3, value, size=13, color=GREEN, bold=True)
 
     rect(s, 0.72, 5.45, 11.9, 0.95, fill=RGBColor.from_string("0F2A2A"), line=ACCENT)
     text(s, 0.98, 5.62, 11.4, 0.3, "PROOF", size=9.5, color=ACCENT, bold=True)
-    text(s, 0.98, 5.9, 11.4, 0.35, "k=20  ·  886,226 rows  ·  ~2 min  ·  upstream: testkit local chain", size=12.5, color=TEXT)
+    text(s, 0.98, 5.9, 11.4, 0.35, "k=20  ·  ~886k rows  ·  ~2 min  ·  upstream: testkit local chain", size=12.5, color=TEXT)
     text(s, 0.72, 6.62, 11.9, 0.3, "The local chain is ephemeral; values are from the recorded run output.", size=9.5, color=FAINT)
-    footer(s, 8)
-    notes(s, "This is a real deploy + submitSnapshot on the testkit undeployed chain. The chain is ephemeral, so the values are recorded from the run rather than a permanent explorer link.")
+    footer(s, 11)
+    notes(s, "This is a real deploy and submitSnapshot on the testkit undeployed chain. The contract verified the global proof before the state update; the user-side path check is on the next slide.")
 
 
-def slide_inclusion(prs):
+def slide_verification(prs):
     s = blank(prs)
-    kicker(s, "User-verifiable")
-    title(s, "Prove inclusion without revealing balances.")
+    kicker(s, "04 · Demo — User verification")
+    title(s, "Verification in one Merkle path.")
+    text(s, 0.72, 1.55, 11.6, 0.55, "The global proof is verified once, by the contract. The user verifies only their own inclusion path.", size=15, color=MUTED, line_spacing=1.05)
+
     steps = [
-        ("1", "Receive inclusion JSON", "6 sibling nodes, signed balances, prices, expected root."),
-        ("2", "Recompute the path", "Leaf hash → 6 parent hashes and sums; compare root."),
-        ("3", "Check NAV", "Signed balance × published prices must be positive."),
+        ("1", "The contract anchors the root", "At submission, the contract verifies the global proof and stores the root only if the proof is valid."),
+        ("2", "The user receives an inclusion JSON", "Sibling nodes, signed balances and the published prices."),
+        ("3", "One local check", "Recompute the leaf and parent steps; compare with the anchored root; optionally check NAV > 0."),
     ]
     for i, (num, head, body) in enumerate(steps):
-        y = 1.8 + i * 1.35
-        circle = s.shapes.add_shape(MSO_SHAPE.OVAL, Inches(0.78), Inches(y + 0.1), Inches(0.42), Inches(0.42))
+        y = 2.2 + i * 1.2
+        circle = s.shapes.add_shape(MSO_SHAPE.OVAL, Inches(0.78), Inches(y + 0.08), Inches(0.4), Inches(0.4))
         circle.fill.solid()
         circle.fill.fore_color.rgb = ACCENT
         circle.line.fill.background()
         circle.shadow.inherit = False
-        text(s, 0.78, y + 0.17, 0.42, 0.25, num, size=10, color=BG, bold=True, align=PP_ALIGN.CENTER)
-        text(s, 1.42, y + 0.06, 4.6, 0.35, head, size=16, color=TEXT, bold=True)
-        text(s, 1.42, y + 0.47, 4.95, 0.65, body, size=12, color=MUTED, line_spacing=1.1)
+        text(s, 0.78, y + 0.15, 0.4, 0.25, num, size=9.5, color=BG, bold=True, align=PP_ALIGN.CENTER)
+        text(s, 1.4, y + 0.03, 4.8, 0.35, head, size=14.5, color=TEXT, bold=True)
+        text(s, 1.4, y + 0.42, 4.95, 0.7, body, size=10.8, color=MUTED, line_spacing=1.05)
 
-    rect(s, 7.2, 1.8, 5.4, 3.75, fill=RGBColor.from_string("08111F"), line=LINE)
-    text(s, 7.45, 1.98, 4.9, 0.3, "$ npm run verify-inclusion", size=10, color=ACCENT, bold=True)
+    rect(s, 7.0, 1.9, 5.6, 3.3, fill=RGBColor.from_string("08111F"), line=LINE)
+    text(s, 7.25, 2.08, 5.1, 0.3, "$ verify-user --root 0x115b… --path alice.json", size=9.5, color=ACCENT, bold=True)
     code = [
-        "{",
-        '  "ok": true,',
-        '  "leafIndex": 2,',
-        '  "leafHashMatches": true,',
-        '  "recomputedRootHex": "115b…34a2",',
-        '  "liabilitiesMatch": true,',
-        '  "navValueMicroUsdt": "37050000000",',
-        '  "navPositive": true',
-        "}",
+        "✓ leaf included",
+        "✓ root matches",
+        "✓ NAV > 0",
     ]
-    text(s, 7.45, 2.38, 4.9, 2.8, "\n".join(code), size=11, color=TEXT, line_spacing=1.25)
-    text(s, 7.45, 4.95, 4.9, 0.4, "Sample leaf: BTC long, ETH short, still NAV > 0.", size=10.5, color=MUTED)
-    footer(s, 9)
-    notes(s, "The verifier is a normal TypeScript CLI. It does not need a wallet or a proof server; it only needs the inclusion JSON and the published root.")
+    text(s, 7.25, 2.65, 5.1, 1.6, "\n".join(code), size=14, color=TEXT, line_spacing=1.5)
+    text(s, 7.25, 4.35, 5.1, 0.55, "No proof server. No global proof. No exchange runbook.", size=11.5, color=ACCENT, bold=True, line_spacing=1.1)
+
+    text(s, 0.72, 5.7, 11.9, 0.4, "No public balance disclosure. The user checks only their own path.", size=12, color=TEXT)
+    text(s, 0.72, 6.15, 11.9, 0.4, "Reference CLI: npm run verify-inclusion  ·  production: one-click verification skill or browser widget.", size=9.5, color=FAINT)
+    footer(s, 12)
+    notes(s, "This is the UX differentiator. Existing PoR flows ask users to verify the global proof and follow complex instructions. Here the global proof is already checked by the contract; the user only checks one path, which a simple skill can automate.")
 
 
 def slide_trust(prs):
     s = blank(prs)
-    kicker(s, "Trust boundary")
-    title(s, "Be explicit about what is not proved.")
-    # two columns
+    kicker(s, "04 · Demo / Trust")
+    title(s, "What this proves — and what it does not.")
     rect(s, 0.72, 1.8, 5.8, 4.3, fill=PANEL)
     text(s, 0.98, 2.0, 5.2, 0.3, "PROVED BY THE CIRCUIT", size=9.5, color=GREEN, bold=True)
     proved = [
         "MST root consistency",
-        "Canonical signed balances",
+        "Canonical signed-balance encoding",
         "Per-user NAV > 0 at submitted prices",
-        "Net exposure ≤ declared reserves",
+        "Exposure within declared reserves",
         "Only the authority can publish",
     ]
     for i, item in enumerate(proved):
@@ -617,100 +591,58 @@ def slide_trust(prs):
     not_proved = [
         "Prices reflect the real market",
         "Reserves match real assets",
-        "Batch covers every user",
+        "The batch covers every user",
         "userIdHash maps to a real customer",
-        "Internal ledger is honest",
+        "The internal ledger is honest",
     ]
     for i, item in enumerate(not_proved):
         text(s, 7.08, 2.42 + i * 0.6, 0.3, 0.3, "×", size=15, color=RED, bold=True)
         text(s, 7.4, 2.4 + i * 0.6, 4.9, 0.35, item, size=13, color=TEXT)
 
-    text(s, 0.72, 6.35, 11.9, 0.4, "Prices and reserves are operator inputs, not an oracle. The trust boundary is documented in the repo.", size=12, color=MUTED)
-    footer(s, 10)
-    notes(s, "This is deliberate: the MVP proves internal consistency of the batch, not external truth. The README and TRUST-BOUNDARY.md say this explicitly.")
-
-
-def slide_status(prs):
-    s = blank(prs)
-    kicker(s, "Status")
-    title(s, "Wave 3: end-to-end, tested, documented.")
-    metrics = [
-        ("37", "tests passing", ACCENT),
-        ("1", "undeployed tx", ACCENT),
-        ("k=20", "886k rows", ACCENT_2),
-        ("0", "balances on-chain", ACCENT),
-    ]
-    for i, (value, label, color) in enumerate(metrics):
-        stat_card(s, 0.72 + i * 3.02, 1.8, 2.8, 1.35, value, label, accent=color, value_size=26)
-
-    bullets(
-        s,
-        0.72,
-        3.55,
-        5.9,
-        2.5,
-        [
-            "Real deploy + submitSnapshot on the testkit undeployed chain",
-            "Circuit simulation, inclusion verification and NAV rejection tests",
-            "English README, scope, encoding, trust-boundary and progress docs",
-            "Apache-2.0, public repo tagged midnightntwrk",
-        ],
-        size=13,
-        gap=12,
-    )
-    rect(s, 7.0, 3.55, 5.6, 2.55, fill=PANEL)
-    text(s, 7.25, 3.75, 5.1, 0.3, "WAVE 3 PROGRESS", size=9.5, color=ACCENT, bold=True)
-    progress = [
-        "Signed three-asset balances",
-        "Public-price NAV check",
-        "Authority-gated submit",
-        "Undeployed reference run",
-    ]
-    for i, item in enumerate(progress):
-        text(s, 7.25, 4.15 + i * 0.45, 0.3, 0.3, "✓", size=12, color=GREEN, bold=True)
-        text(s, 7.55, 4.13 + i * 0.45, 4.8, 0.35, item, size=12, color=TEXT)
-    text(s, 7.25, 5.9, 5.1, 0.3, "See docs/PROGRESS-WAVE3.md", size=9.5, color=FAINT)
-    footer(s, 11)
-    notes(s, "The evidence is in the repo: tests, docs and a recorded reference run. The remaining gap is external truth: prices, reserves and coverage.")
+    text(s, 0.72, 6.35, 11.9, 0.4, "The contract verifies the proof, not external truth. Prices and reserves are operator inputs, not an oracle.", size=12, color=MUTED)
+    footer(s, 13)
+    notes(s, "The trust boundary is part of the product. The protocol makes verification cheap; it does not replace external reserve attestation or price oracles.")
 
 
 def slide_next(prs):
     s = blank(prs)
-    kicker(s, "Next")
-    title(s, "From MVP to production PoR.")
+    kicker(s, "05 · Next")
+    title(s, "From reference MVP to production PoR.")
     items = [
-        ("Preprod / ledger-9", "Upgrade the toolchain and deploy the same statement on Preprod."),
-        ("On-chain inclusion", "Move the inclusion check into a second Compact circuit."),
-        ("Scale", "128 → 1024 leaves and batch aggregation; measure k and proof time."),
-        ("External truth", "Price oracle, reserve attestations and an auditor portal."),
+        ("One-click verification skill", "A browser widget or CLI that takes the anchored root and an inclusion JSON and returns pass/fail, with no runbook."),
+        ("Sharded aggregation", "Bounded batches and a batch-root aggregation tree for large user bases."),
+        ("Cross-chain reserve anchor", "reserveProofHash, challenge-response and time locking so external reserves and liabilities share one timestamp."),
+        ("Auditor portal and Preprod", "Snapshot history, schema versioning, compiler audit and the ledger-9 upgrade."),
     ]
     for i, (head, body) in enumerate(items):
         x = 0.72 + (i % 2) * 6.05
         y = 1.8 + (i // 2) * 1.55
-        rect(s, x, y, 5.75, 1.3, fill=PANEL)
-        text(s, x + 0.25, y + 0.18, 5.2, 0.35, head, size=16, color=ACCENT, bold=True)
-        text(s, x + 0.25, y + 0.58, 5.2, 0.6, body, size=12, color=MUTED, line_spacing=1.05)
+        rect(s, x, y, 5.75, 1.35, fill=PANEL)
+        text(s, x + 0.25, y + 0.18, 5.2, 0.35, head, size=15.5, color=ACCENT, bold=True)
+        text(s, x + 0.25, y + 0.58, 5.2, 0.65, body, size=10.5, color=MUTED, line_spacing=1.02)
 
     rect(s, 0.72, 5.2, 11.9, 1.25, fill=RGBColor.from_string("0F2A2A"), line=ACCENT)
     text(s, 0.98, 5.38, 11.3, 0.45, "Verifiable reserves without surveillance.", size=24, color=TEXT, bold=True)
     text(s, 0.98, 5.86, 11.3, 0.35, "github.com/ardmere/ardmere-midnight-demo  ·  Apache-2.0", size=11, color=ACCENT)
-    footer(s, 12)
-    notes(s, "Close with the product statement and the repository link. Invite judges to run the local commands or inspect the recorded undeployed run.")
+    footer(s, 14)
+    notes(s, "Close on the standard and the simple user path. The next milestone is the one-click skill; the larger architecture work is aggregation, cross-chain anchoring and the auditor portal.")
 
 
 def main():
     prs = new_deck()
     slide_title(prs)
-    slide_problem(prs)
-    slide_idea(prs)
+    slide_thesis(prs)
+    slide_pain(prs)
+    slide_who(prs)
     slide_why(prs)
+    slide_problems(prs)
     slide_architecture(prs)
-    slide_circuit(prs)
-    slide_data(prs)
-    slide_run(prs)
-    slide_inclusion(prs)
-    slide_trust(prs)
+    slide_schema(prs)
+    slide_guarantees(prs)
     slide_status(prs)
+    slide_results(prs)
+    slide_verification(prs)
+    slide_trust(prs)
     slide_next(prs)
 
     out_dir = os.path.join(os.path.dirname(__file__), "..", "docs", "slides")

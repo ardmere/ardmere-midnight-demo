@@ -14,6 +14,9 @@ secrets/
 # Optional local proof-server state
 proof-server-data/
 
+# Local demo session state (proof bytes, snapshots, server log)
+.demo/
+
 # Local private-state store created by testkit undeployed runs
 midnight-level-db/
 

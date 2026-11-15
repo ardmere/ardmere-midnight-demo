@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import * as CompiledContract from "@midnight-ntwrk/compact-js/effect/CompiledContract";
 import * as standardPorGenerated from "../contract/managed/standard_por/contract/index.js";
 import { standardPorWitnesses } from "./standardPorWitnesses.js";
+import type { StandardPorLedger } from "./standardPorContract.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -29,3 +30,7 @@ export function standardPorCompiledContract() {
   cc = CompiledContract.withCompiledFileAssets(cc, STANDARD_POR_ZK_DIR);
   return cc;
 }
+/** Decode the public ledger state using the same ESM build as the contract. */
+export const standardPorLedger = (standardPorGenerated as any).ledger as (
+  state: unknown,
+) => StandardPorLedger;

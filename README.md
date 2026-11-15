@@ -130,6 +130,25 @@ The testkit stack (see [compose.yml](compose.yml)) starts node, indexer and proo
 server, deploys `standard_por`, and submits one snapshot. Results are written to
 `fixtures/undeployed-last-run.json` (gitignored) and printed as JSON.
 
+### Strict six-step demo (recording)
+
+For a stage-by-stage demo, use the split commands described in
+[docs/DEMO-6-STEP.md](docs/DEMO-6-STEP.md):
+
+```bash
+npm run compile:standard-por   # 1. compile
+npm run demo:deploy            # 2. deploy (starts the local session)
+npm run demo:prove             # 3. generate proof, do not submit
+npm run demo:submit            # 4. submit proof on-chain
+npm run demo:read              # 5. regulator reads the snapshot
+npm run demo:verify            # 6. user verifies inclusion
+npm run demo:stop              # cleanup
+```
+
+`demo:deploy` owns a long-lived testkit session so deploy, prove, submit and
+read can be separate processes against one live local chain. The session keeps
+its state under `.demo/` (gitignored).
+
 ## Reference run (undeployed)
 
 Verified on the testkit local chain. The chain is ephemeral and is shut down
@@ -163,7 +182,14 @@ proof server.
 | `npm run submit-snapshot` | Local circuit simulation + proof-server health |
 | `npm run verify-inclusion` | Verify an inclusion JSON against the published root |
 | `npm run read:por` | Read simulated public ledger fields |
-| `npm run undeployed:deploy-submit` | Deploy + submit on the local testkit chain |
+| `npm run undeployed:deploy-submit` | One-shot deploy + submit on the local testkit chain |
+| `npm run demo:session` | Start the long-lived demo session explicitly |
+| `npm run demo:deploy` | Six-step demo: deploy through the live session |
+| `npm run demo:prove` | Six-step demo: generate proof without submitting |
+| `npm run demo:submit` | Six-step demo: submit the pre-generated proof |
+| `npm run demo:read` | Six-step demo: read the public snapshot from the indexer |
+| `npm run demo:verify` | Six-step demo: verify inclusion against the anchored root |
+| `npm run demo:stop` | Stop the demo session and testkit containers |
 | `npm run proof:health` | Probe the configured proof server |
 
 ## Repository layout
@@ -181,7 +207,8 @@ src/
   submitSnapshot.ts           # dry-run CLI
   verifyInclusion.ts          # user verification CLI
   readPor.ts                  # public-field CLI
-  undeployedDeploySubmit.ts   # local chain deploy + submit
+  undeployedDeploySubmit.ts   # one-shot local chain deploy + submit
+  demo/                       # six-step session, deploy, prove, submit, read, verify
 scripts/
   generate-mst-fixtures.ts
   generate-mst-unrolled.compact.ts
@@ -219,7 +246,8 @@ materials:
 - this README (setup, architecture, Midnight integration);
 - [docs/PROGRESS-WAVE3.md](docs/PROGRESS-WAVE3.md) — progress made during Wave 3;
 - [docs/HACKATHON-MVP-SCOPE.md](docs/HACKATHON-MVP-SCOPE.md) — scope and acceptance;
-- slide deck: [docs/slides/Standardized-Midnight-PoR-Wave3.pdf](docs/slides/Standardized-Midnight-PoR-Wave3.pdf) (editable PPTX alongside it); demo video (recorded separately);
+- slide deck: [docs/slides/Standardized-Midnight-PoR-Wave3.pdf](docs/slides/Standardized-Midnight-PoR-Wave3.pdf) (editable PPTX alongside it);
+- demo video: [docs/video/ardmere-midnight-demo-captioned.mp4](docs/video/ardmere-midnight-demo-captioned.mp4) (burned-in English captions; [SRT](docs/video/ardmere-midnight-demo.srt) alongside);
 - compiled Compact artifacts under `contract/managed/`.
 
 ## Archived Wave 3 membership demo

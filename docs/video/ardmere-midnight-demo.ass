@@ -1,0 +1,20 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Caption,Helvetica,30,&H00FFFFFF,&H000000FF,&H00101820,&H99101820,0,0,0,0,100,100,0,0,3,1,0,2,80,80,46,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:04.00,Caption,,0,0,0,,{\c&HBFD32D&\fs22\b1}1/6  COMPILE{\c&HFFFFFF&\fs30\b0}\NCompile the Compact circuits and generate the prover key.
+Dialogue: 0,0:00:04.00,0:00:07.00,Caption,,0,0,0,,{\c&HBFD32D&\fs22\b1}2/6  DEPLOY{\c&HFFFFFF&\fs30\b0}\NDeploy the PoR contract and set the authority key.
+Dialogue: 0,0:00:07.00,0:00:11.00,Caption,,0,0,0,,{\c&HBFD32D&\fs22\b1}3/6  GENERATE PROOF{\c&HFFFFFF&\fs30\b0}\NThe exchange generates the proof locally - no transaction yet.
+Dialogue: 0,0:00:11.00,0:00:15.00,Caption,,0,0,0,,{\c&HBFD32D&\fs22\b1}4/6  SUBMIT{\c&HFFFFFF&\fs30\b0}\NSubmit the proof; the contract verifies it and anchors the root.
+Dialogue: 0,0:00:15.00,0:00:21.00,Caption,,0,0,0,,{\c&HBFD32D&\fs22\b1}5/6  READ SNAPSHOT{\c&HFFFFFF&\fs30\b0}\NRegulator reads the contract address, root, prices and reserves.
+Dialogue: 0,0:00:21.00,0:00:27.00,Caption,,0,0,0,,{\c&HBFD32D&\fs22\b1}5/6  READ SNAPSHOT{\c&HFFFFFF&\fs30\b0}\NIt also checks liabilities, gross sums and the published flag.
+Dialogue: 0,0:00:29.00,0:00:38.50,Caption,,0,0,0,,{\c&HBFD32D&\fs22\b1}6/6  VERIFY INCLUSION{\c&HFFFFFF&\fs30\b0}\NUser verifies one Merkle path and NAV against the anchored root.

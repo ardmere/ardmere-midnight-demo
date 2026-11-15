@@ -30,7 +30,14 @@
     "read": "tsx src/read.ts",
     "wallet:address": "tsx src/wallet.ts",
     "wallet:balance": "tsx src/walletBalance.ts",
-    "proof:health": "tsx src/proofHealth.ts"
+    "proof:health": "tsx src/proofHealth.ts",
+    "demo:session": "tsx src/demo/session.ts",
+    "demo:deploy": "tsx src/demo/deploy.ts",
+    "demo:prove": "tsx src/demo/prove.ts",
+    "demo:submit": "tsx src/demo/submit.ts",
+    "demo:read": "tsx src/demo/read.ts",
+    "demo:verify": "tsx src/demo/verify.ts",
+    "demo:stop": "tsx src/demo/stop.ts"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-js": "2.5.1",

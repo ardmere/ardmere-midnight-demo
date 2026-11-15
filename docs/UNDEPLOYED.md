@@ -1,5 +1,9 @@
 # Undeployed: `deployContract` + `submitSnapshot`
 
+> For a stage-by-stage recording flow (compile -> deploy -> prove -> submit ->
+> read -> verify), see [DEMO-6-STEP.md](DEMO-6-STEP.md). The split commands use
+> a long-lived session server; this document covers the one-shot command.
+
 Deploy `standard_por` on a local **undeployed** chain and submit one demo
 snapshot from the fixtures batch.
 

@@ -219,7 +219,7 @@ materials:
 - this README (setup, architecture, Midnight integration);
 - [docs/PROGRESS-WAVE3.md](docs/PROGRESS-WAVE3.md) — progress made during Wave 3;
 - [docs/HACKATHON-MVP-SCOPE.md](docs/HACKATHON-MVP-SCOPE.md) — scope and acceptance;
-- slide deck and demo video (kept with the submission entry);
+- slide deck: [docs/slides/Standardized-Midnight-PoR-Wave3.pdf](docs/slides/Standardized-Midnight-PoR-Wave3.pdf) (editable PPTX alongside it); demo video (recorded separately);
 - compiled Compact artifacts under `contract/managed/`.
 
 ## Archived Wave 3 membership demo
